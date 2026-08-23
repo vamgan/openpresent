@@ -40,6 +40,9 @@ import {
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.css', '.json', '.html', '.svg']);
 const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', '.git', '.openpresent', 'test-results']);
 
+/** Upper bound on any single capture step, so a stuck browser fails instead of hanging. */
+const CAPTURE_TIMEOUT_MS = 20_000;
+
 export interface StudioEngineOptions {
   projectRoot: string;
   entry?: string;
@@ -266,14 +269,24 @@ export class StudioEngine implements StudioOperations {
     let playwright: typeof import('playwright');
     try { playwright = await import('playwright'); }
     catch { throw new Error('Slide capture requires Playwright. Install Playwright and its Chromium browser.'); }
-    const browser = await playwright.chromium.launch({ headless: true });
+    // `--no-sandbox` keeps capture working inside the containers CI and many
+    // dev setups run in, where the Chromium sandbox cannot be created.
+    const browser = await playwright.chromium.launch({ headless: true, args: ['--no-sandbox'] });
     try {
       const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
-      await page.goto(this.previewForSlide(slideId), { waitUntil: 'networkidle' });
-      await page.waitForFunction((id) => document.querySelector<HTMLElement>('[data-openpresent-slide]')?.dataset.openpresentSlide === id, slideId);
+      // Never wait for network idle: the preview holds an open HMR socket, so
+      // idle may never arrive and the capture would hang an agent forever.
+      // Every step is bounded for the same reason.
+      page.setDefaultTimeout(CAPTURE_TIMEOUT_MS);
+      await page.goto(this.previewForSlide(slideId), { waitUntil: 'load', timeout: CAPTURE_TIMEOUT_MS });
+      await page.waitForFunction(
+        (id) => document.querySelector<HTMLElement>('[data-openpresent-slide]')?.dataset.openpresentSlide === id,
+        slideId,
+        { timeout: CAPTURE_TIMEOUT_MS },
+      );
       const stage = page.locator('.op-stage-shell');
       const box = await stage.boundingBox();
-      const data = await stage.screenshot({ type: 'png' });
+      const data = await stage.screenshot({ type: 'png', timeout: CAPTURE_TIMEOUT_MS });
       return { slideId, mimeType: 'image/png', data: data.toString('base64'), width: Math.round(box?.width ?? 0), height: Math.round(box?.height ?? 0) };
     } finally { await browser.close(); }
   }
