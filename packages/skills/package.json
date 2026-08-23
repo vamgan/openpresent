@@ -1,0 +1,38 @@
+{
+  "name": "@openpresent/skills",
+  "version": "0.3.0",
+  "description": "Agent-readable OpenPresent design-system skills and local installation helpers.",
+  "type": "module",
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean && node scripts/copy-skills.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vamgan/openpresent.git",
+    "directory": "packages/skills"
+  },
+  "homepage": "https://github.com/vamgan/openpresent#readme",
+  "bugs": {
+    "url": "https://github.com/vamgan/openpresent/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

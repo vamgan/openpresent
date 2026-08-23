@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deck Direction"
+  short_description: "Art-direct coherent, evidence-led OpenPresent decks"
+  default_prompt: "Use $deck-direction to turn this brief and evidence into a directed, polished OpenPresent deck."
