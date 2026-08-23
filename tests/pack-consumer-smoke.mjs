@@ -229,3 +229,9 @@ try {
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }
+
+// Every assertion has run by here. This check spawns dev servers, an MCP server,
+// and an ACP agent, and on some machines one of them leaves a handle open that
+// would keep the process alive indefinitely. Exit on the result we already have
+// rather than waiting on a child that has no more work to do.
+process.exit(0);
