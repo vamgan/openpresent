@@ -33,6 +33,9 @@ jobs:
       - run: pnpm test
       - run: pnpm validate
 
+      # The packed smoke captures a slide, which needs a real browser.
+      - run: pnpm exec playwright install --with-deps chromium
+
       # Prove the tarballs a consumer would install actually work.
       - run: node tests/pack-consumer-smoke.mjs
 
