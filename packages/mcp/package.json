@@ -29,7 +29,7 @@
     "@openpresent/studio": "workspace:*",
     "zod": "^4.4.3"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vamgan/openpresent.git",

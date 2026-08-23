@@ -10,7 +10,7 @@ the 12px text before your audience does.
 
 [Quick start](#quick-start) · [Why](#the-problem-with-ai-generated-decks) · [Studio](#studio) · [Validation](#validation-is-the-point) · [Docs](docs/)
 
-MIT licensed · Runs entirely on your machine · No account, no cloud, no telemetry
+Source available (FSL-1.1-MIT) · Runs entirely on your machine · No account, no cloud, no telemetry
 
 </div>
 
@@ -174,4 +174,9 @@ covers what is deliberately not built yet.
 
 ## License
 
-[MIT](LICENSE).
+[Functional Source License 1.1 with an MIT future grant](LICENSE).
+
+Use it, modify it, and redistribute it freely, including inside a company. The
+one thing it does not permit is shipping a competing commercial product or
+service built on OpenPresent, because an enterprise edition is planned. Each
+release converts to the MIT License two years after it is published.

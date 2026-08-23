@@ -42,7 +42,7 @@
   "optionalDependencies": {
     "playwright": "^1.55.0"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vamgan/openpresent.git",
