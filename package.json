@@ -1,6 +1,6 @@
 {
   "name": "openpresent",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Open-source React framework and browser runtime for AI-authored HTML presentations.",
   "type": "module",
