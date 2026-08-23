@@ -107,27 +107,29 @@ export class CheckpointManager {
     }
   }
 
-  changedFiles(): string[] {
-    const checkpoint = this.pending ?? this.done.at(-1);
-    if (!checkpoint) return [];
-    return changedIn(checkpoint).map((file) => relative(this.projectRoot, file.path));
-  }
-
-  /** Commits the open step, or drops it when nothing actually changed. */
-  commit(label?: string) {
+  /**
+   * Commits the open step, or drops it when nothing actually changed, and
+   * reports the files it committed. A turn that changed nothing reports
+   * nothing: reading the files back off the history instead would name
+   * whichever edit came before it and show it as freshly changed.
+   */
+  commit(label?: string): string[] {
     const checkpoint = this.pending;
     this.pending = undefined;
-    if (!checkpoint || changedIn(checkpoint).length === 0) return;
+    if (!checkpoint) return [];
+    const changed = changedIn(checkpoint);
+    if (changed.length === 0) return [];
     if (label) checkpoint.label = label;
-    checkpoint.files = changedIn(checkpoint);
+    checkpoint.files = changed;
     this.done.push(checkpoint);
     if (this.done.length > HISTORY_LIMIT) this.done.shift();
     // A new edit after undoing abandons the branch that was undone.
     this.undone = [];
+    return changed.map((file) => relative(this.projectRoot, file.path));
   }
 
   /** Kept for the agent flow, where a turn may legitimately change nothing. */
-  discardIfUnchanged() { this.commit(); }
+  discardIfUnchanged(): string[] { return this.commit(); }
 
   applyGuarded(edits: GuardedEdit[], label = 'Edit'): EditResult {
     if (edits.length === 0) throw new Error('At least one guarded edit is required.');

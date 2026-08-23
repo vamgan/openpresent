@@ -172,6 +172,19 @@ describe('project boundaries and guarded checkpoints', () => {
     checkpoints.dispose();
   });
 
+  it('reports no changed files for a turn that changed nothing', () => {
+    const root = project();
+    const checkpoints = new CheckpointManager(root);
+    checkpoints.applyGuarded([{ path: 'src/deck.tsx', oldText: 'Original phrase', newText: 'Directed phrase' }], 'First edit');
+
+    // A later turn opens and writes nothing. It must not inherit the files the
+    // previous edit changed and show them as freshly changed.
+    checkpoints.begin(['src/deck.tsx'], 'Empty turn');
+    expect(checkpoints.discardIfUnchanged()).toEqual([]);
+    expect(checkpoints.history()).toHaveLength(1);
+    checkpoints.dispose();
+  });
+
   it('walks back and forward through several labelled edits', () => {
     const root = project();
     const deck = join(root, 'src/deck.tsx');

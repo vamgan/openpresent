@@ -455,8 +455,7 @@ export class StudioEngine implements StudioOperations {
   }
 
   finishAgentCheckpoint() {
-    this.checkpoints.discardIfUnchanged();
-    this.state.changedFiles = this.checkpoints.changedFiles();
+    this.state.changedFiles = this.checkpoints.discardIfUnchanged();
     if (this.state.changedFiles.length > 0) delete this.state.selection;
     this.syncHistory();
     this.refreshOutline();
