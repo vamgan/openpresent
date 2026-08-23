@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Run every release step but do not publish or tag anything
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -20,29 +26,46 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
-      # Never publish something that does not pass its own checks.
-      - run: pnpm install --frozen-lockfile
       # Build precedes test: scaffolding vendors built package output.
+      - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test
       - run: pnpm validate
 
-      - name: Verify the tag matches the version in package.json
+      # Prove the tarballs a consumer would install actually work.
+      - run: node tests/pack-consumer-smoke.mjs
+
+      - name: Check the release is publishable
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          PKG="$(node -p "require('./package.json').version")"
-          if [ "$TAG" != "$PKG" ]; then
-            echo "Tag $TAG does not match package version $PKG" >&2
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            PKG="$(node -p "require('./package.json').version")"
+            if [ "$TAG" != "$PKG" ]; then
+              echo "::error::Tag $TAG does not match package version $PKG."
+              exit 1
+            fi
+          fi
+          if [ "$DRY_RUN" != "true" ] && [ -z "$NPM_TOKEN" ]; then
+            echo "::error::NPM_TOKEN is not set. Add it with: gh secret set NPM_TOKEN --repo ${GITHUB_REPOSITORY}"
             exit 1
           fi
 
-      - name: Publish packages to npm
+      - name: Publish packages
+        if: ${{ inputs.dry_run != true }}
         run: pnpm -r --filter "./packages/*" publish --access public --no-git-checks --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Report what a real run would publish
+        if: ${{ inputs.dry_run == true }}
+        run: pnpm -r --filter "./packages/*" publish --access public --no-git-checks --dry-run
+
       - name: Create the GitHub release
+        if: ${{ github.ref_type == 'tag' && inputs.dry_run != true }}
         run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file <(node scripts/changelog-section.mjs "$GITHUB_REF_NAME")
         env:
           GH_TOKEN: ${{ github.token }}
