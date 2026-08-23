@@ -1,0 +1,43 @@
+{
+  "name": "@openpresent/validator",
+  "version": "0.3.0",
+  "description": "Configurable model and DOM diagnostics for OpenPresent decks.",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --external playwright",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.55.0"
+  },
+  "dependencies": {
+    "typescript": "^5.9.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vamgan/openpresent.git",
+    "directory": "packages/validator"
+  },
+  "homepage": "https://github.com/vamgan/openpresent#readme",
+  "bugs": {
+    "url": "https://github.com/vamgan/openpresent/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
