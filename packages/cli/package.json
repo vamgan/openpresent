@@ -1,0 +1,49 @@
+{
+  "name": "@openpresent/cli",
+  "version": "0.3.0",
+  "description": "Create, develop, build, and validate OpenPresent decks.",
+  "type": "module",
+  "bin": {
+    "openpresent": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts && node scripts/copy-templates.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openpresent/components": "workspace:*",
+    "@openpresent/core": "workspace:*",
+    "@openpresent/mcp": "workspace:*",
+    "@openpresent/skills": "workspace:*",
+    "@openpresent/studio": "workspace:*",
+    "@openpresent/validator": "workspace:*",
+    "commander": "^14.0.0",
+    "vite": "^7.1.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vamgan/openpresent.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/vamgan/openpresent#readme",
+  "bugs": {
+    "url": "https://github.com/vamgan/openpresent/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
