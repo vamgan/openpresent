@@ -33,7 +33,20 @@ if (!changelog.includes(`## [${version}]`)) {
   process.exit(1);
 }
 
+if (run('git', ['tag', '--list', `v${version}`])) {
+  process.stderr.write(`v${version} is already tagged. Choose a new version.\n`);
+  process.exit(1);
+}
+
+// The manifests may already carry this version, which is normal for a first
+// release. A no-op bump is not a failure, so only commit when something changed.
 run('git', ['add', '-A']);
-run('git', ['commit', '-m', `chore(release): v${version}`]);
+if (run('git', ['status', '--porcelain'])) {
+  run('git', ['commit', '-m', `chore(release): v${version}`]);
+  process.stdout.write(`Committed the version bump for v${version}.\n`);
+} else {
+  process.stdout.write(`Manifests already at ${version}; tagging the current commit.\n`);
+}
+
 run('git', ['tag', '-a', `v${version}`, '-m', `v${version}`]);
 process.stdout.write(`Tagged v${version}. Push with: git push --follow-tags\n`);
