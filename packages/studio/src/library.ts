@@ -54,6 +54,27 @@ function isEntry(value: unknown): value is LibraryEntry {
   return Boolean(item && typeof item.id === 'string' && typeof item.path === 'string' && typeof item.title === 'string');
 }
 
+/**
+ * Fills in whatever an older or hand-edited library file left out. The dates
+ * are sorted on, so a single entry missing one used to throw and take the whole
+ * presentation list with it — the author would see no presentations at all.
+ */
+function normalizeEntry(entry: LibraryEntry): LibraryEntry {
+  const unknownDate = new Date(0).toISOString();
+  return {
+    ...entry,
+    slideCount: typeof entry.slideCount === 'number' ? entry.slideCount : 0,
+    createdAt: typeof entry.createdAt === 'string' ? entry.createdAt : unknownDate,
+    lastOpenedAt: typeof entry.lastOpenedAt === 'string' ? entry.lastOpenedAt : unknownDate,
+  };
+}
+
+/** Most recently opened first. The dates are ISO, so they compare directly. */
+function byRecency(left: LibraryEntry, right: LibraryEntry): number {
+  if (left.lastOpenedAt === right.lastOpenedAt) return 0;
+  return left.lastOpenedAt < right.lastOpenedAt ? 1 : -1;
+}
+
 /** A presentation is any folder Studio can open: an index.html plus a deck entry. */
 export function isDocumentRoot(path: string): boolean {
   if (!existsSync(join(path, 'index.html'))) return false;
@@ -69,8 +90,8 @@ export function readLibrary(): LibraryEntry[] {
   if (!Array.isArray(entries)) return [];
   return entries
     .filter(isEntry)
-    .map((entry) => ({ ...entry, missing: !isDocumentRoot(entry.path) }))
-    .sort((left, right) => right.lastOpenedAt.localeCompare(left.lastOpenedAt));
+    .map((entry) => ({ ...normalizeEntry(entry), missing: !isDocumentRoot(entry.path) }))
+    .sort(byRecency);
 }
 
 /**
@@ -102,8 +123,7 @@ export function discoverDocuments(parent = defaultDocumentsRoot()): LibraryEntry
 
 /** Everything the author can open, recorded or merely present on disk. */
 export function listPresentations(): LibraryEntry[] {
-  return [...readLibrary(), ...discoverDocuments()]
-    .sort((left, right) => right.lastOpenedAt.localeCompare(left.lastOpenedAt));
+  return [...readLibrary(), ...discoverDocuments()].sort(byRecency);
 }
 
 /** Records a presentation as opened, keyed by path so re-opening never duplicates. */

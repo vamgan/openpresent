@@ -301,8 +301,12 @@ export async function startStudio(options: StartStudioOptions = {}): Promise<Stu
             'cache-control': 'no-store',
             connection: 'keep-alive',
           });
-          clients.add(response);
+          // Send the opening frame before joining the broadcast set. Joining
+          // first leaves the state read below racing any change that lands
+          // while it runs, which would deliver the newer frame and then
+          // overwrite it with this older one.
           response.write(`data: ${JSON.stringify(await engine.getState())}\n\n`);
+          clients.add(response);
           // Keeps intermediaries and idle sockets from dropping a quiet stream.
           const heartbeat = setInterval(() => response.write(': keep-alive\n\n'), 25_000);
           heartbeat.unref?.();

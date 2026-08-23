@@ -586,6 +586,37 @@ describe('shared engine and loopback server', () => {
     } finally { await server.close(); }
   }, 40_000);
 
+  it('still lists presentations when the library file is missing fields', () => {
+    const data = mkdtempSync(join(tmpdir(), 'openpresent-data-'));
+    temporary.push(data);
+    const previousData = process.env.OPENPRESENT_DATA_DIR;
+    process.env.OPENPRESENT_DATA_DIR = data;
+    try {
+      const legacy = project();
+      const current = project();
+      // One entry written by an older Studio with no timestamps, beside a
+      // current one. Sorting compares the two, and comparing against a missing
+      // date used to throw and leave the author with no presentations at all.
+      write(join(data, 'library.json'), `${JSON.stringify({
+        version: 1,
+        entries: [
+          { id: 'legacy', path: legacy, title: 'Legacy deck' },
+          { id: 'current', path: current, title: 'Current deck', slideCount: 3, createdAt: '2026-08-01T00:00:00.000Z', lastOpenedAt: '2026-08-01T00:00:00.000Z' },
+        ],
+      })}\n`);
+
+      // The dated entry sorts ahead; the undated one is treated as oldest.
+      const library = readLibrary();
+      expect(library.map(({ title }) => title)).toEqual(['Current deck', 'Legacy deck']);
+      const restored = library.find(({ id }) => id === 'legacy')!;
+      expect(restored.lastOpenedAt).toBe(new Date(0).toISOString());
+      expect(restored.slideCount).toBe(0);
+      expect(restored.missing).toBe(false);
+    } finally {
+      if (previousData === undefined) delete process.env.OPENPRESENT_DATA_DIR; else process.env.OPENPRESENT_DATA_DIR = previousData;
+    }
+  });
+
   it('remembers presentations and switches the workspace between them', async () => {
     const data = mkdtempSync(join(tmpdir(), 'openpresent-data-'));
     const docs = mkdtempSync(join(tmpdir(), 'openpresent-docs-'));
