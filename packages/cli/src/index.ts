@@ -7,7 +7,13 @@ import { startStudio, type StudioServer } from '@openpresent/studio';
 import { installSkill, listSkills, resolveSkill } from '@openpresent/skills';
 import { validateTarget, type Diagnostic, type RuleId, type ValidatorConfig } from '@openpresent/validator';
 
-export const VERSION = '0.1.0';
+// Read from the manifest rather than restating it. A literal here drifts
+// silently every time the release script bumps package.json, which is how
+// `--version` came to report 0.1.0 from a 0.3.2 install. `../package.json`
+// resolves to this package from both src/ and the built dist/.
+export const VERSION: string = (
+  JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
+).version;
 
 function isDirectoryEmpty(path: string) {
   return !existsSync(path) || readdirSync(path).length === 0;

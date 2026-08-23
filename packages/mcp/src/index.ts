@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/server';
@@ -5,7 +6,12 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { connectStudio, startStudio, type StudioOperations, type StudioServer } from '@openpresent/studio';
 import * as z from 'zod/v4';
 
-export const VERSION = '0.3.0';
+// Read from the manifest rather than restating it: this version goes out in the
+// MCP handshake, so a stale literal tells every connected agent the wrong thing.
+// `../package.json` resolves to this package from both src/ and the built dist/.
+export const VERSION: string = (
+  JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
+).version;
 export const MCP_INSTRUCTIONS = 'OpenPresent keeps TSX authoritative. Open with open_workspace, inspect get_state, get_outline, and get_selection, edit through apply_edit, then check with validate_deck. Slides accept arbitrary JSX children, so author whatever the content needs, including your own markup, layout, and components; bespoke slides are the norm, not the exception. insert_slide with list_slide_templates is a shortcut for a conventional layout and for adding several slides at once. It is a starting point to build on, never a limit on what a slide may contain, and a deck of nothing but unmodified templates is a failure. Use replace_selected_text to reword the current selection. Run validate_deck, inspect or capture the result, and call undo only when acceptance regresses. Use navigate_slide to keep the browser, selection, and agent context aligned. delete_slide and new_deck are destructive. Read tools are safe; mutating tools are explicitly annotated. Studio owns the runtime and is already running: never install dependencies, never add or edit package.json, tsconfig, or a build config, and never run package managers, builds, dev servers, or typechecks. An absent or empty node_modules is expected and correct; validate_deck is the check. The entire loop is local and project-scoped; never invent metrics or edit outside the selected root.';
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;

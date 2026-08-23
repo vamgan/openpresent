@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { BUILTIN_AGENT_PROFILES, discoverAgentProfiles, loadAgentProfiles } from './agents';
-import { CheckpointManager } from './checkpoints';
+import { CheckpointManager, sha256 } from './checkpoints';
 import { StudioEngine } from './engine';
 import { forgetDocument, readLibrary } from './library';
 import { resolveProjectPath } from './security';
@@ -139,6 +139,36 @@ describe('project boundaries and guarded checkpoints', () => {
     expect(readFileSync(join(root, 'src/deck.tsx'), 'utf8')).toContain('Original phrase');
     expect(readFileSync(join(root, 'src/theme.css'), 'utf8')).toContain('black');
     expect(readFileSync(join(root, 'notes.md'), 'utf8')).toContain('changed outside studio');
+    checkpoints.dispose();
+  });
+
+  it('folds a guarded edit into the agent turn already in progress', () => {
+    const root = project();
+    write(join(root, 'src/theme.css'), ':root { color: black; }\n');
+    const checkpoints = new CheckpointManager(root);
+
+    // An agent turn opens a step, then reaches an MCP apply_edit mid-turn.
+    checkpoints.begin(['src/deck.tsx', 'src/theme.css'], 'Agent turn');
+    const edit = checkpoints.applyGuarded([{ path: 'src/theme.css', oldText: 'black', newText: 'coral' }]);
+
+    // The guarded edit reports only its own file, and the turn is still open,
+    // so the agent's later writes still belong to a live checkpoint.
+    expect(edit.changedFiles).toEqual(['src/theme.css']);
+    expect(checkpoints.hasPath('src/deck.tsx')).toBe(true);
+    expect(checkpoints.available).toBe(false);
+
+    checkpoints.writeFromAgent(
+      'src/deck.tsx',
+      readFileSync(join(root, 'src/deck.tsx'), 'utf8').replace('Original phrase', 'Directed phrase'),
+      sha256(readFileSync(join(root, 'src/deck.tsx'), 'utf8')),
+    );
+    checkpoints.commit('Agent turn');
+
+    // Both files land as one undoable step rather than the turn being lost.
+    expect(checkpoints.history()).toHaveLength(1);
+    expect(checkpoints.undo().restoredFiles.sort()).toEqual(['src/deck.tsx', 'src/theme.css']);
+    expect(readFileSync(join(root, 'src/theme.css'), 'utf8')).toContain('black');
+    expect(readFileSync(join(root, 'src/deck.tsx'), 'utf8')).toContain('Original phrase');
     checkpoints.dispose();
   });
 

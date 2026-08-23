@@ -47,7 +47,6 @@ function changedIn(checkpoint: Checkpoint) {
  * outside Studio are never silently discarded.
  */
 export class CheckpointManager {
-  private readonly directory = join(process.env.TMPDIR ?? '/tmp', `openpresent-checkpoints-${randomUUID()}`);
   private readonly projectRoot: string;
   private pending?: Checkpoint;
   private done: Checkpoint[] = [];
@@ -55,25 +54,42 @@ export class CheckpointManager {
 
   constructor(projectRoot: string) {
     this.projectRoot = canonicalProjectRoot(projectRoot);
-    mkdirSync(this.directory, { recursive: true });
   }
 
   get available() { return this.done.length > 0; }
   get redoAvailable() { return this.undone.length > 0; }
   get id() { return this.pending?.id ?? this.done.at(-1)?.id; }
 
+  private snapshot(candidate: string): FileSnapshot {
+    const path = resolveProjectPath(this.projectRoot, candidate, { editable: true });
+    const existedBefore = existsSync(path);
+    return {
+      path,
+      existedBefore,
+      ...(existedBefore ? { before: readFileSync(path, 'utf8') } : {}),
+    } satisfies FileSnapshot;
+  }
+
   begin(paths: string[], label = 'Edit'): string {
-    const files = [...new Set(paths)].map((candidate) => {
-      const path = resolveProjectPath(this.projectRoot, candidate, { editable: true });
-      const existedBefore = existsSync(path);
-      return {
-        path,
-        existedBefore,
-        ...(existedBefore ? { before: readFileSync(path, 'utf8') } : {}),
-      } satisfies FileSnapshot;
-    });
+    const files = [...new Set(paths)].map((candidate) => this.snapshot(candidate));
     this.pending = { id: randomUUID(), label, createdAt: new Date().toISOString(), files };
     return this.pending.id;
+  }
+
+  /**
+   * Adds paths to the step already open, so an edit made inside an agent turn
+   * joins that step instead of replacing it. Calling begin() here would drop
+   * the writes the turn had recorded so far and leave later agent writes
+   * failing their checkpoint check.
+   */
+  private trackWithin(paths: string[]): string {
+    const pending = this.pending;
+    if (!pending) throw new Error('No OpenPresent checkpoint is active.');
+    for (const candidate of new Set(paths)) {
+      const snapshot = this.snapshot(candidate);
+      if (!pending.files.some((file) => file.path === snapshot.path)) pending.files.push(snapshot);
+    }
+    return pending.id;
   }
 
   hasPath(path: string): boolean {
@@ -122,13 +138,18 @@ export class CheckpointManager {
       if (!edit.oldText) throw new Error(`Guarded edit for ${edit.path} requires non-empty oldText.`);
       const occurrences = content.split(edit.oldText).length - 1;
       if (occurrences !== 1) throw new Error(`Guarded edit expected oldText exactly once in ${edit.path}, found ${occurrences}.`);
-      return { path, next: content.replace(edit.oldText, edit.newText) };
+      const next = content.replace(edit.oldText, edit.newText);
+      return { path, next, changed: next !== content };
     });
-    const id = this.begin(prepared.map((item) => item.path), label);
+    // Inside an open agent turn this joins that step; on its own it is a step.
+    const nested = Boolean(this.pending);
+    const paths = prepared.map((item) => item.path);
+    const id = nested ? this.trackWithin(paths) : this.begin(paths, label);
     for (const item of prepared) atomicWrite(item.path, item.next);
-    this.noteAfter(prepared.map((item) => item.path));
-    const changedFiles = this.changedFiles();
-    this.commit();
+    this.noteAfter(paths);
+    // Report only what this edit changed, not everything the open step touched.
+    const changedFiles = prepared.filter((item) => item.changed).map((item) => relative(this.projectRoot, item.path));
+    if (!nested) this.commit();
     return { checkpointId: id, changedFiles };
   }
 
@@ -173,7 +194,6 @@ export class CheckpointManager {
   }
 
   dispose() {
-    rmSync(this.directory, { recursive: true, force: true });
     this.pending = undefined;
     this.done = [];
     this.undone = [];
