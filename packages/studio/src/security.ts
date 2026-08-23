@@ -1,5 +1,5 @@
 import { existsSync, realpathSync, statSync } from 'node:fs';
-import { dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { basename, dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 
 const BLOCKED_SEGMENTS = new Set(['.git', 'node_modules', 'dist', '.openpresent']);
 const EDITABLE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.css', '.json', '.md', '.html', '.svg']);
@@ -15,7 +15,7 @@ function canonicalMissingPath(path: string): string {
   while (!existsSync(cursor)) {
     const parent = dirname(cursor);
     if (parent === cursor) break;
-    tail.unshift(path.slice(parent.length + 1, cursor.length));
+    tail.unshift(basename(cursor));
     cursor = parent;
   }
   const canonicalParent = realpathSync(cursor);
@@ -43,9 +43,14 @@ export function resolveProjectPath(projectRoot: string, candidate: string, optio
   return canonical;
 }
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
+
 export function assertLoopbackUrl(value: string): URL {
   const url = new URL(value);
-  if (!['http:', 'https:'].includes(url.protocol) || !['127.0.0.1', 'localhost', '::1'].includes(url.hostname)) {
+  // URL keeps an IPv6 host bracketed, so ::1 arrives here as "[::1]" and never
+  // matched the bare form: loopback was refused on IPv6-first machines.
+  const host = url.hostname.replace(/^\[(.*)\]$/, '$1');
+  if (!['http:', 'https:'].includes(url.protocol) || !LOOPBACK_HOSTS.has(host)) {
     throw new Error(`OpenPresent Studio only accepts loopback URLs, received ${value}.`);
   }
   return url;

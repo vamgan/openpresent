@@ -17,7 +17,7 @@ import { BUILTIN_AGENT_PROFILES, discoverAgentProfiles, loadAgentProfiles } from
 import { CheckpointManager, sha256 } from './checkpoints';
 import { StudioEngine } from './engine';
 import { forgetDocument, readLibrary } from './library';
-import { resolveProjectPath } from './security';
+import { assertLoopbackUrl, resolveProjectPath } from './security';
 import { scaffoldStudioProject } from './scaffold';
 import { startStudio } from './server';
 import { normalizeSelection } from './types';
@@ -122,6 +122,16 @@ describe('project boundaries and guarded checkpoints', () => {
     expect(() => resolveProjectPath(root, 'linked.ts', { mustExist: true })).toThrow(/outside/);
     expect(() => resolveProjectPath(root, '.git/config', { mustExist: true })).toThrow(/editable presentation/);
     expect(() => resolveProjectPath(root, 'binary.bin', { editable: true })).toThrow(/Unsupported/);
+  });
+
+  it('accepts every loopback host, including bracketed IPv6, and refuses the rest', () => {
+    expect(assertLoopbackUrl('http://127.0.0.1:4173/').hostname).toBe('127.0.0.1');
+    expect(assertLoopbackUrl('http://localhost:4173/').hostname).toBe('localhost');
+    // URL keeps an IPv6 host bracketed, so this arrives as "[::1]".
+    expect(assertLoopbackUrl('http://[::1]:4173/').hostname).toBe('[::1]');
+    expect(() => assertLoopbackUrl('http://example.com/')).toThrow(/loopback/);
+    expect(() => assertLoopbackUrl('http://[2001:db8::1]/')).toThrow(/loopback/);
+    expect(() => assertLoopbackUrl('file:///etc/passwd')).toThrow(/loopback/);
   });
 
   it('applies and restores multi-file edits while preserving unrelated user changes', () => {
