@@ -1,6 +1,6 @@
 {
   "name": "@openpresent/skills",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Agent-readable OpenPresent design-system skills and local installation helpers.",
   "type": "module",
   "files": [
