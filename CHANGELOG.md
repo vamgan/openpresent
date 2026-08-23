@@ -3,6 +3,22 @@
 All notable changes to OpenPresent are recorded here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-23
+
+### Added
+
+- A README and a copy of the licence in every published package, so each npm
+  page explains what the package is instead of showing nothing.
+- `npx @openpresent/skills <target>` installs a skill straight into the place an
+  agent already looks for one: `.claude/skills` for this project or for every
+  project, `.agents/skills` for Codex and similar, or plain files to upload to a
+  GPT.
+
+### Changed
+
+- The licence field now reads `FSL-1.1-MIT` rather than
+  `SEE LICENSE IN LICENSE`, which npm displayed opaquely.
+
 ## [0.3.0] - 2026-08-22
 
 ### Added

@@ -8,6 +8,7 @@ Your agent writes real React slides on your machine. A validator catches the
 12px legend, the overlapping element, and the text running off the stage,
 **before your audience does.**
 
+[![npm](https://img.shields.io/npm/v/@openpresent/cli?label=%40openpresent%2Fcli)](https://www.npmjs.com/package/@openpresent/cli)
 [![CI](https://github.com/vamgan/openpresent/actions/workflows/ci.yml/badge.svg)](https://github.com/vamgan/openpresent/actions/workflows/ci.yml)
 [![License: FSL-1.1-MIT](https://img.shields.io/badge/license-FSL--1.1--MIT-0e7c93)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520.19-2e7d52)](package.json)
@@ -134,12 +135,23 @@ Tools let an agent change a deck. They do not tell it what a good deck is. That
 ships as a skill you install into the presentation, so the direction travels
 with the work instead of living in someone's prompt.
 
+Install it wherever your agent already looks for skills:
+
+```bash
+npx -y @openpresent/skills claude        # .claude/skills in this project
+npx -y @openpresent/skills claude-user   # every project on this machine
+npx -y @openpresent/skills agents        # .agents/skills, for Codex and similar
+npx -y @openpresent/skills gpt           # plain files to upload to a GPT
+```
+
+Or scaffold a presentation with it already in place:
+
 ```bash
 openpresent studio ./my-deck --create --skill deck-direction --open
 ```
 
-The skill lands as a plain Markdown file your agent reads. Edit it, or replace
-it with your own house style.
+It lands as a plain Markdown file your agent reads. Edit it, or replace it with
+your own house style.
 
 ## Validation is the point
 
@@ -169,6 +181,15 @@ deck.tsx  ───────────────────────�
 Packages flow one way: components depend on core, cli on validator. The runtime
 never depends on the component library. Details in
 [docs/architecture.md](docs/architecture.md).
+
+All seven are on npm:
+[cli](https://www.npmjs.com/package/@openpresent/cli) ·
+[core](https://www.npmjs.com/package/@openpresent/core) ·
+[components](https://www.npmjs.com/package/@openpresent/components) ·
+[validator](https://www.npmjs.com/package/@openpresent/validator) ·
+[studio](https://www.npmjs.com/package/@openpresent/studio) ·
+[mcp](https://www.npmjs.com/package/@openpresent/mcp) ·
+[skills](https://www.npmjs.com/package/@openpresent/skills)
 
 ## Development
 

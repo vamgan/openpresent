@@ -42,7 +42,7 @@
   "optionalDependencies": {
     "playwright": "^1.55.0"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "FSL-1.1-MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vamgan/openpresent.git",

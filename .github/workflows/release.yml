@@ -58,6 +58,9 @@ jobs:
             exit 1
           fi
 
+      # Publish through pnpm: it rewrites the workspace:* ranges to real
+      # versions. Publishing these with npm directly would ship "workspace:*" as
+      # a dependency and break every install.
       - name: Publish packages
         if: ${{ inputs.dry_run != true }}
         run: pnpm -r --filter "./packages/*" publish --access public --no-git-checks --provenance

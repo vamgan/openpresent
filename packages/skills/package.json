@@ -4,6 +4,7 @@
   "description": "Agent-readable OpenPresent design-system skills and local installation helpers.",
   "type": "module",
   "files": [
+    "bin",
     "dist",
     "skills"
   ],
@@ -22,7 +23,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "FSL-1.1-MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vamgan/openpresent.git",
@@ -34,5 +35,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "bin": {
+    "openpresent-skill": "./bin/install.mjs"
   }
 }

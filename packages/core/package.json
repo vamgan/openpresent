@@ -34,7 +34,7 @@
   "dependencies": {
     "motion": "^12.23.12"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "FSL-1.1-MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vamgan/openpresent.git",
