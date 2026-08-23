@@ -1,0 +1,511 @@
+<title>OpenPresent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="A local-first presentation runtime for AI agents. Real React files, edited in place, checked by a validator that catches what a model cannot see." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+
+<style>
+  :root {
+    --paper: #edeff2;
+    --surface: #fff;
+    --sunken: #e3e7ec;
+    --ink: #12141a;
+    --muted: #515a66;
+    --faint: #6b7581;
+    --line: #d8dde3;
+    --accent: #0e7c93;
+    --accent-wash: #e2f0f4;
+    --good: #2e7d52;
+    --warn: #a8710a;
+    --bad: #c0392b;
+
+    --display: "Bricolage Grotesque", "Helvetica Neue", sans-serif;
+    --body: "IBM Plex Sans", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --rail: 96px;
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0d1013;
+      --surface: #14181c;
+      --sunken: #0a0c0f;
+      --ink: #e8ecf0;
+      --muted: #9aa5b1;
+      --faint: #78838f;
+      --line: #232a31;
+      --accent: #38b3ce;
+      --accent-wash: #0e2a31;
+      --good: #52a578;
+      --warn: #d19a28;
+      --bad: #e0685a;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0d1013;
+    --surface: #14181c;
+    --sunken: #0a0c0f;
+    --ink: #e8ecf0;
+    --muted: #9aa5b1;
+    --faint: #78838f;
+    --line: #232a31;
+    --accent: #38b3ce;
+    --accent-wash: #0e2a31;
+    --good: #52a578;
+    --warn: #d19a28;
+    --bad: #e0685a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.03em; line-height: 1.02; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.7rem, 6.5vw, 5rem); }
+  h2 { font-size: clamp(1.8rem, 3.4vw, 2.6rem); }
+  h3 { font-size: 1.06rem; font-weight: 700; letter-spacing: -.012em; line-height: 1.3; }
+  p { margin: 0; }
+
+  /* Proof-sheet frame: a measurement rail beside one measured column. */
+  .sheet { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); max-width: 1180px; margin-inline: auto; }
+  .rail { position: relative; border-right: 1px solid var(--line); }
+  .rail::after {
+    content: "";
+    position: absolute; inset-block: 0; right: -1px; width: 1px;
+    background: repeating-linear-gradient(to bottom, var(--line) 0 10px, transparent 10px 22px);
+  }
+  .tick {
+    position: sticky; top: 28px;
+    padding: 0 14px 0 0; text-align: right;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .06em;
+    color: var(--faint); text-transform: uppercase;
+  }
+  .col { padding: 0 clamp(20px, 4vw, 56px) 0 clamp(20px, 4vw, 44px); }
+  section { padding-block: clamp(56px, 8vw, 104px); border-bottom: 1px solid var(--line); }
+
+  /* SMPTE calibration bars: the instrument this whole product is about. */
+  .bars { display: flex; height: 7px; width: 148px; border-radius: 2px; overflow: hidden; }
+  .bars i { flex: 1; }
+  .bars i:nth-child(1) { background: #b8b8b8; }
+  .bars i:nth-child(2) { background: #c3b53f; }
+  .bars i:nth-child(3) { background: #3fb3c3; }
+  .bars i:nth-child(4) { background: #48a35c; }
+  .bars i:nth-child(5) { background: #b0499b; }
+  .bars i:nth-child(6) { background: #b8483f; }
+  .bars i:nth-child(7) { background: #4257a8; }
+
+  header.masthead { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 26px; flex-wrap: wrap; }
+  .wordmark { font-family: var(--display); font-weight: 700; font-size: 1.28rem; letter-spacing: -.035em; display: inline-flex; align-items: center; gap: 12px; }
+  .masthead nav { display: flex; gap: 22px; font-size: .93rem; }
+  .masthead nav a { color: var(--muted); text-decoration: none; }
+  .masthead nav a:hover { color: var(--ink); }
+
+  .lede { font-size: clamp(1.12rem, 1.9vw, 1.34rem); color: var(--muted); max-width: 56ch; margin-top: 26px; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: 22px; display: flex; align-items: center; gap: 14px; }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 34px; }
+  .cmd {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: var(--ink); color: var(--paper);
+    font-family: var(--mono); font-size: .87rem;
+    padding: 13px 18px; border-radius: 7px; text-decoration: none;
+  }
+  .cmd span:first-child { opacity: .5; }
+  .ghost { color: var(--ink); text-decoration: none; font-weight: 600; font-size: .95rem; padding: 13px 4px; border-bottom: 1px solid var(--line); }
+  .ghost:hover { border-color: var(--accent); }
+
+  /* Hero exhibit: a real slide, and the finding a model cannot see for itself. */
+  .exhibit { margin-top: 54px; display: grid; gap: 18px; }
+  .stage {
+    position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
+    background: #fbfbfc; border: 1px solid var(--line);
+    box-shadow: 0 22px 50px rgb(10 14 20 / 14%);
+    padding: clamp(20px, 3.6vw, 42px);
+    display: grid; align-content: space-between;
+    container-type: inline-size;
+  }
+  .stage-head { font-family: var(--display); font-weight: 700; color: #14161c; font-size: clamp(1.3rem, 4.4cqi, 2.5rem); letter-spacing: -.03em; line-height: 1.05; }
+  .stage-sub { color: #565f6b; font-size: clamp(.72rem, 1.7cqi, .95rem); max-width: 44ch; margin-top: 10px; }
+  .legend { display: flex; gap: clamp(12px, 3cqi, 30px); align-items: flex-end; }
+  .legend div { display: grid; gap: 5px; }
+  .legend b { font-family: var(--display); font-size: clamp(1rem, 3.4cqi, 1.9rem); color: #14161c; letter-spacing: -.02em; }
+  .legend small { font-family: var(--mono); font-size: clamp(.5rem, 1.15cqi, .66rem); color: #7b838e; }
+  .flagged { position: relative; outline: 1.5px dashed var(--bad); outline-offset: 5px; border-radius: 2px; }
+
+  .finding {
+    display: grid; grid-template-columns: auto 1fr; gap: 4px 14px;
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn);
+    border-radius: 7px; padding: 15px 18px;
+    font-family: var(--mono); font-size: .8rem; line-height: 1.55;
+  }
+  .finding .id { color: var(--warn); }
+  .finding .where { color: var(--faint); }
+  .finding .msg { color: var(--ink); grid-column: 1 / -1; }
+  .finding .fix { color: var(--muted); grid-column: 1 / -1; }
+  .finding .fix b { color: var(--good); font-weight: 500; }
+
+  .problems { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 40px; }
+  @media (min-width: 720px) { .problems { grid-template-columns: 1fr 1fr; } }
+  .problem { background: var(--surface); padding: 26px 28px; display: grid; gap: 9px; align-content: start; }
+  .problem p { color: var(--muted); font-size: .96rem; }
+
+  /* A real sequence, so it is numbered. */
+  .loop { display: grid; gap: 20px; margin-top: 40px; counter-reset: step; }
+  @media (min-width: 860px) { .loop { grid-template-columns: repeat(3, 1fr); } }
+  .step { display: grid; gap: 10px; align-content: start; padding-top: 20px; border-top: 2px solid var(--ink); }
+  .step::before {
+    counter-increment: step; content: counter(step, decimal-leading-zero);
+    font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: .1em;
+  }
+  .step p { color: var(--muted); font-size: .96rem; }
+
+  .tools { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 30px; }
+  @media (min-width: 640px) { .tools { grid-template-columns: 1fr 1fr; } }
+  .tool { background: var(--surface); padding: 15px 18px; display: grid; gap: 3px; }
+  .tool code { font-family: var(--mono); font-size: .78rem; color: var(--accent); }
+  .tool span { font-size: .87rem; color: var(--muted); }
+
+  .skill-card {
+    margin-top: 30px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--surface); padding: 24px 26px; display: grid; gap: 12px;
+  }
+  .skill-card .name { font-family: var(--mono); font-size: .82rem; color: var(--accent); }
+  .skill-card ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: .96rem; display: grid; gap: 6px; }
+
+  .features { display: grid; gap: 26px 40px; margin-top: 40px; }
+  @media (min-width: 780px) { .features { grid-template-columns: 1fr 1fr; } }
+  .feature { display: grid; gap: 7px; align-content: start; }
+  .feature p { color: var(--muted); font-size: .96rem; }
+
+  pre {
+    background: var(--sunken); border: 1px solid var(--line); border-radius: 8px;
+    padding: 18px 20px; overflow-x: auto; margin: 26px 0 0;
+    font-family: var(--mono); font-size: .82rem; line-height: 1.7; color: var(--ink);
+  }
+  pre .c { color: var(--faint); }
+  pre .k { color: var(--accent); }
+
+  .tree { color: var(--muted); }
+  .tree b { color: var(--ink); font-weight: 500; }
+
+  .note { color: var(--muted); font-size: .96rem; max-width: var(--measure); margin-top: 22px; }
+  .prose { max-width: var(--measure); margin-top: 22px; color: var(--muted); }
+
+  footer { padding-block: 46px; display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; color: var(--faint); font-size: .88rem; }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 700px) {
+    .sheet { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .col { padding-inline: 20px; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .finding { animation: settle .5s ease-out .35s both; }
+    @keyframes settle { from { opacity: 0; transform: translateY(6px); } }
+  }
+</style>
+
+<div class="sheet">
+  <div class="rail"></div>
+  <div class="col">
+    <header class="masthead">
+      <span class="wordmark"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>OpenPresent</span>
+      <nav>
+        <a href="#problem">Why</a>
+        <a href="#loop">How it works</a>
+        <a href="#studio">Studio</a>
+        <a href="#agents">Agents</a>
+        <a href="https://github.com/vamgan/openpresent">GitHub</a>
+      </nav>
+    </header>
+  </div>
+</div>
+
+<div class="sheet">
+  <div class="rail"><div class="tick">Thesis</div></div>
+  <div class="col">
+    <section>
+      <p class="kicker">Local-first presentation runtime</p>
+      <h1>Everyone makes slides with AI now. Nothing checks them.</h1>
+      <p class="lede">
+        Ask any model for a deck and you get a wall of HTML. It looks convincing in
+        the chat window and falls apart on a projector. OpenPresent gives that
+        workflow a runtime, a component library, and a validator that inspects what
+        actually rendered before an audience does.
+      </p>
+
+      <div class="cta-row">
+        <a class="cmd" href="https://github.com/vamgan/openpresent"><span>$</span><span>npx -y @openpresent/cli studio --open</span></a>
+        <a class="ghost" href="#loop">See the loop</a>
+      </div>
+
+      <div class="exhibit">
+        <div class="stage">
+          <div>
+            <div class="stage-head">Ideas, rendered.</div>
+            <p class="stage-sub">A typed presentation runtime for agents who think in stories, not slide coordinates.</p>
+          </div>
+          <div class="legend">
+            <div><b>1600&times;900</b><small class="flagged">Stable logical stage</small></div>
+            <div><b>18px</b><small class="flagged">Minimum body text</small></div>
+            <div><b>0</b><small class="flagged">Cloud dependencies</small></div>
+          </div>
+        </div>
+
+        <p class="note" style="margin-top:0">
+          Your model cannot see this slide. The validator can.
+        </p>
+        <div class="finding" role="note">
+          <span class="id">dom.tiny-text</span>
+          <span class="where">warning &middot; slide &ldquo;opening&rdquo; &middot; 3 elements</span>
+          <span class="msg">Legend labels render at 13px on the logical stage.</span>
+          <span class="fix">Fix: <b>raise to at least 18px</b> so the text survives projection.</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="problem">
+  <div class="rail"><div class="tick">Problem</div></div>
+  <div class="col">
+    <section>
+      <h2>The format was the right call. What came with it was not.</h2>
+      <p class="prose">
+        HTML won for good reasons. PowerPoint is zipped XML driving an opaque layout
+        engine, so a model writes it blind, while HTML is the language models write
+        best and the browser runs everywhere. The whole industry converged on it
+        within a year, and inherited the same four problems.
+      </p>
+
+      <div class="problems">
+        <div class="problem">
+          <h3>Every deck is a one-off</h3>
+          <p>Keyboard navigation, scaling, fullscreen, reduced motion, deep links: reimplemented badly or skipped, once per deck, forever.</p>
+        </div>
+        <div class="problem">
+          <h3>Quality is a coin flip</h3>
+          <p>With no shared primitives, output swings with the wording of the prompt. Two decks from one company do not look related.</p>
+        </div>
+        <div class="problem">
+          <h3>Nothing says it went wrong</h3>
+          <p>Overlapping elements and 12px labels ship because no part of the loop ever objects. "Looks fine to me" is not available to a model.</p>
+        </div>
+        <div class="problem">
+          <h3>The output is a dead end</h3>
+          <p>One generated file is not something you edit next quarter. You regenerate from scratch and hope for a better roll.</p>
+        </div>
+      </div>
+
+      <p class="note">
+        The result is a deck that looks impressive in the chat window and
+        unprofessional on a projector.
+      </p>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="loop">
+  <div class="rail"><div class="tick">Loop</div></div>
+  <div class="col">
+    <section>
+      <h2>Write, check, repair.</h2>
+      <p class="prose">
+        The validator is the part no other AI deck tool has, and the reason quality
+        stops depending on how well someone worded the prompt.
+      </p>
+
+      <div class="loop">
+        <div class="step">
+          <h3>The agent writes TSX</h3>
+          <p>Slides take arbitrary React children. Primitives cover the patterns that repeat; plain markup covers everything specific to your story.</p>
+        </div>
+        <div class="step">
+          <h3>The validator inspects</h3>
+          <p>Real source and the real DOM. Text below a readable size, elements off the canvas or overlapping, missing alt text, unreachable controls.</p>
+        </div>
+        <div class="step">
+          <h3>The agent repairs</h3>
+          <p>Each finding carries a rule ID, a severity, the slide, and a repair hint, so it can be acted on without a human relaying the problem.</p>
+        </div>
+      </div>
+
+      <pre><span class="c"># check the source, or the running deck</span>
+openpresent validate src/deck.tsx
+openpresent validate http://127.0.0.1:4173 <span class="k">--min-font-size</span> 18</pre>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="studio">
+  <div class="rail"><div class="tick">Studio</div></div>
+  <div class="col">
+    <section>
+      <h2>A workspace you and your agent share.</h2>
+
+      <div class="features">
+        <div class="feature">
+          <h3>Live canvas</h3>
+          <p>Click any element to select it, double-click text to edit in place. Edits repaint the slide without reloading, so you keep your place.</p>
+        </div>
+        <div class="feature">
+          <h3>Your agent, your model</h3>
+          <p>Codex, Claude, Gemini, or Kiro, whichever you already have. Pick the model per presentation; each deck resumes its own conversation.</p>
+        </div>
+        <div class="feature">
+          <h3>Approvals you control</h3>
+          <p>Safe in-project edits can apply automatically. Destructive ones always ask. Anything reaching outside the folder is refused, not prompted.</p>
+        </div>
+        <div class="feature">
+          <h3>History that reads like actions</h3>
+          <p>"Added metric slide". "Agent: tightened the opening". Step back through it, or jump straight to any earlier point.</p>
+        </div>
+        <div class="feature">
+          <h3>Export one file</h3>
+          <p>A self-contained HTML document you choose the location for. It opens anywhere, with no folder of assets to keep beside it.</p>
+        </div>
+        <div class="feature">
+          <h3>Nothing leaves the machine</h3>
+          <p>Loopback only. No account, no cloud service, no telemetry. Your agent runs locally under your own provider credentials.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="agents">
+  <div class="rail"><div class="tick">Agents</div></div>
+  <div class="col">
+    <section>
+      <h2>Give your agent the studio, not a blank file.</h2>
+      <p class="prose">
+        OpenPresent ships an MCP server. Point your agent at it and the server
+        starts Studio locally, opens the workspace, and exposes the authoring loop
+        as tools. Your agent gets a live deck it can read, edit, and check, instead
+        of guessing at HTML it will never see rendered.
+      </p>
+
+      <pre><span class="c">// Claude Code, Codex, or any MCP client</span>
+{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"openpresent"</span>: {
+      <span class="k">"command"</span>: "npx",
+      <span class="k">"args"</span>: [
+        "-y", "@openpresent/mcp",
+        "--project", "~/Documents/OpenPresent/q3-review",
+        "--open"
+      ]
+    }
+  }
+}</pre>
+
+      <p class="note">
+        Add <code>--create</code> to scaffold an empty folder first. If Studio is
+        already running, the server attaches to it with
+        <code>--attach-url</code> instead of starting a second one.
+      </p>
+
+      <div class="tools">
+        <div class="tool"><code>get_state, get_outline, get_selection</code><span>Read the deck, the active slide, and what the author has selected.</span></div>
+        <div class="tool"><code>apply_edit</code><span>Guarded source edits: exact match, single occurrence, checkpointed.</span></div>
+        <div class="tool"><code>insert_slide, list_slide_templates</code><span>Add one slide or many, with the imports they need.</span></div>
+        <div class="tool"><code>validate_deck</code><span>Run the checks and get findings back as structured data.</span></div>
+        <div class="tool"><code>capture_slide</code><span>Screenshot a slide so the model can look at its own work.</span></div>
+        <div class="tool"><code>undo, redo</code><span>Every change is reversible, by the agent or by you.</span></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="skills">
+  <div class="rail"><div class="tick">Skills</div></div>
+  <div class="col">
+    <section>
+      <h2>Taste, installed alongside the tools.</h2>
+      <p class="prose">
+        Tools let an agent change a deck. They do not tell it what a good deck is.
+        OpenPresent ships that as a skill you install into the presentation, so the
+        direction travels with the work instead of living in someone's prompt.
+      </p>
+
+      <div class="skill-card">
+        <span class="name">deck-direction</span>
+        <ul>
+          <li>Separate supplied facts from assumptions, and never invent a metric.</li>
+          <li>Establish the narrative spine before composing any slide.</li>
+          <li>Choose the visual system first: one accent, one type scale, deliberate density.</li>
+          <li>Reach for the least rigid authoring level the story actually needs.</li>
+          <li>Treat charts and images as evidence, and motion as meaning rather than decoration.</li>
+        </ul>
+      </div>
+
+      <pre>openpresent studio ./my-deck <span class="k">--create</span> <span class="k">--skill</span> deck-direction <span class="k">--open</span></pre>
+
+      <p class="note">
+        The skill lands in the presentation as a plain Markdown file your agent
+        reads. Edit it, replace it with your own house style, or drop in additional
+        skills the same way.
+      </p>
+    </section>
+  </div>
+</div>
+
+<div class="sheet">
+  <div class="rail"><div class="tick">Files</div></div>
+  <div class="col">
+    <section>
+      <h2>A presentation is a document, not a project.</h2>
+      <p class="prose">
+        Studio supplies React and the build, so your folder holds only your work. No
+        <code>package.json</code>, no lockfile, no <code>node_modules</code>. Move it,
+        copy it, email it, or put it in version control like anything else you own.
+      </p>
+
+      <pre class="tree">~/Documents/OpenPresent/q3-review/
+  index.html
+  src/<b>deck.tsx</b>      <span class="c">&larr; your slides</span>
+  src/styles.css</pre>
+
+      <p class="note">
+        And because it is ordinary React, you are never locked out of your own deck.
+        Edit it by hand whenever the agent is not the fastest path.
+      </p>
+    </section>
+  </div>
+</div>
+
+<div class="sheet">
+  <div class="rail"><div class="tick">Start</div></div>
+  <div class="col">
+    <section style="border-bottom: none;">
+      <h2>Open it and describe the deck you need.</h2>
+      <p class="prose">Requires Node.js 20.19 or newer, and an agent CLI you have already signed in to.</p>
+      <div class="cta-row">
+        <a class="cmd" href="https://github.com/vamgan/openpresent"><span>$</span><span>npx -y @openpresent/cli studio --open</span></a>
+        <a class="ghost" href="https://github.com/vamgan/openpresent">Read the source</a>
+      </div>
+    </section>
+
+    <footer>
+      <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span>MIT licensed. Built to run on your own machine.</span>
+      <span><a href="https://github.com/vamgan/openpresent">GitHub</a></span>
+    </footer>
+  </div>
+</div>
