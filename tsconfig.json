@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@openpresent/core": ["packages/core/src/index.ts"],
+      "@openpresent/components": ["packages/components/src/index.ts"],
+      "@openpresent/skills": ["packages/skills/src/index.ts"],
+      "@openpresent/validator": ["packages/validator/src/index.ts"],
+      "@openpresent/studio": ["packages/studio/src/index.ts"],
+      "@openpresent/mcp": ["packages/mcp/src/index.ts"],
+      "@openpresent/cli": ["packages/cli/src/index.ts"]
+    }
+  }
+}

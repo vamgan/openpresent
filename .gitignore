@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.DS_Store
+*.log
+.openpresent/
+work/
+packages/skills/skills/
+
+# Internal build-harness records, not part of the product.
+.harness/
