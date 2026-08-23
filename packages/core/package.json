@@ -1,0 +1,50 @@
+{
+  "name": "@openpresent/core",
+  "version": "0.3.0",
+  "description": "Typed deck model, theme system, and browser presentation runtime for OpenPresent.",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --external react --external react-dom --external motion && cp src/styles.css dist/styles.css",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": ">=18.2",
+    "react-dom": ">=18.2"
+  },
+  "dependencies": {
+    "motion": "^12.23.12"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vamgan/openpresent.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/vamgan/openpresent#readme",
+  "bugs": {
+    "url": "https://github.com/vamgan/openpresent/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
