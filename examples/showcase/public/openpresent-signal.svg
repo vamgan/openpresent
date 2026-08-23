@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" role="img" aria-labelledby="title desc">
+  <title id="title">OpenPresent signal field</title>
+  <desc id="desc">An abstract coral signal crosses a monochrome geometric field.</desc>
+  <rect width="960" height="960" fill="#111113"/>
+  <g stroke="#303034" stroke-width="1" opacity=".75">
+    <path d="M0 120h960M0 240h960M0 360h960M0 480h960M0 600h960M0 720h960M0 840h960"/>
+    <path d="M120 0v960M240 0v960M360 0v960M480 0v960M600 0v960M720 0v960M840 0v960"/>
+  </g>
+  <g fill="none" stroke="#626269" stroke-width="2">
+    <circle cx="480" cy="480" r="340"/><circle cx="480" cy="480" r="250"/><circle cx="480" cy="480" r="160"/>
+  </g>
+  <path d="M-40 664C102 664 129 572 240 572c119 0 126 138 248 138 125 0 130-340 258-340 103 0 121 96 254 96" fill="none" stroke="#ff5d50" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="488" cy="710" r="34" fill="#ff5d50"/>
+  <circle cx="488" cy="710" r="74" fill="none" stroke="#ff5d50" opacity=".35" stroke-width="2"/>
+  <g fill="#f6f4f0" font-family="ui-monospace, monospace" font-size="18">
+    <text x="44" y="58">SIGNAL / LOCAL</text><text x="750" y="912">OPENPRESENT</text>
+  </g>
+</svg>
