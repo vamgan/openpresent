@@ -22,9 +22,10 @@ jobs:
 
       # Never publish something that does not pass its own checks.
       - run: pnpm install --frozen-lockfile
+      # Build precedes test: scaffolding vendors built package output.
       - run: pnpm typecheck
-      - run: pnpm test
       - run: pnpm build
+      - run: pnpm test
       - run: pnpm validate
 
       - name: Verify the tag matches the version in package.json

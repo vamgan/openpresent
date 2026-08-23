@@ -16,9 +16,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Build precedes test: scaffolding vendors built package output.
       - run: pnpm typecheck
-      - run: pnpm test
       - run: pnpm build
+      - run: pnpm test
       - run: pnpm validate
 
   browser:
