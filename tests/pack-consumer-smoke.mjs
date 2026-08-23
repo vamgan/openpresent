@@ -219,6 +219,10 @@ try {
       new Promise((resolveExit) => dev.once('exit', resolveExit)),
       new Promise((resolveWait) => setTimeout(resolveWait, 3_000)),
     ]);
+    // A dev server that ignores SIGTERM keeps its stdio pipes open, and those
+    // pipes keep this process alive long after the checks have all passed.
+    if (dev.exitCode === null && dev.signalCode === null) dev.kill('SIGKILL');
+    dev.unref();
   }
 
   console.log('Packed consumer smoke passed: exports/assets, typecheck, build/dev, Studio, MCP, ACP attach, guarded edit, capture, and undo.');
