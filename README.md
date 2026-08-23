@@ -2,92 +2,75 @@
 
 # OpenPresent
 
-**Everyone makes slides with AI now. Nothing checks them.**
+### Everyone makes slides with AI now. Nothing checks them.
 
-A local-first presentation runtime for AI agents. Your slides are real React
-files on your machine, your agent edits them in place, and a validator catches
-the 12px text before your audience does.
+Your agent writes real React slides on your machine. A validator catches the
+12px legend, the overlapping element, and the text running off the stage,
+**before your audience does.**
 
-[Quick start](#quick-start) · [Why](#the-problem-with-ai-generated-decks) · [Studio](#studio) · [Validation](#validation-is-the-point) · [Docs](docs/)
+[![CI](https://github.com/vamgan/openpresent/actions/workflows/ci.yml/badge.svg)](https://github.com/vamgan/openpresent/actions/workflows/ci.yml)
+[![License: FSL-1.1-MIT](https://img.shields.io/badge/license-FSL--1.1--MIT-0e7c93)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%E2%89%A520.19-2e7d52)](package.json)
+[![Site](https://img.shields.io/badge/site-openpresent-12141a)](https://vamgan.github.io/openpresent/)
 
-Source available (FSL-1.1-MIT) · Runs entirely on your machine · No account, no cloud, no telemetry
+```bash
+npx -y @openpresent/cli studio --open
+```
 
 </div>
 
+![OpenPresent Studio: a slide rail, a live canvas, and an agent panel side by side](docs/assets/studio.png)
+
 ---
 
-## The problem with AI-generated decks
+## The 30 second version
 
-Ask any model for a presentation today and you get a wall of HTML. It looks
-convincing in the chat window and falls apart on a projector. This is not a
-fashion; it is the path of least resistance. PowerPoint is zipped XML
-driving an opaque layout engine, so a model cannot see what it produced and
-iterates blind. HTML is the format models write best, the browser is everywhere,
-and with a screenshot the model can finally check its own work.
+Ask any model for a deck and you get a wall of HTML. It looks convincing in the
+chat window and falls apart on a projector, because **the model never sees what
+it made.**
 
-So everyone converged on the same thing, and inherited the same four problems.
-
-**Every deck is a one-off.** No shared runtime means keyboard navigation,
-scaling, fullscreen, reduced motion, and deep links get half-reimplemented or
-quietly skipped, once per deck, forever.
-
-**Quality is a coin flip.** With no primitives, output swings wildly with the
-prompt. Two decks from the same person do not look like they came from the same
-company.
-
-**Nothing tells the model it got it wrong.** This is the real one. A model ships
-12px chart labels, overlapping elements, and text running off the slide, because
-nothing in the loop ever says so. It cannot see the rendered result, and "looks
-fine to me" is not available to it.
-
-**The output is a dead end.** A single generated file is not something you can
-edit next quarter. You regenerate from scratch and hope.
-
-The result is decks that look impressive in the chat window and unprofessional
-on a projector.
-
-## What OpenPresent does instead
-
-A deck is ordinary React that you own. A runtime handles the plumbing once, for
-every deck. And a validator inspects the rendered result and reports defects in
-language an agent can act on, so quality stops depending on how well someone
-worded the prompt.
+OpenPresent closes that loop:
 
 ```
 model.tiny-text  warning  [charts]  Legend text renders at 13px on the logical stage.
                           Fix: raise to at least 18px so it survives projection.
 ```
 
-That loop is the product. Everything else supports it.
+The agent reads that, fixes it, and checks again. No human relaying the problem.
 
-## Quick start
+## Why AI decks keep coming out unprofessional
 
-```bash
-npx -y @openpresent/cli studio --open
-```
+HTML won for good reasons. PowerPoint is zipped XML driving an opaque layout
+engine, so a model writes it blind, while HTML is the language models write best
+and the browser runs everywhere. The whole industry converged on it in about a
+year, and inherited the same four problems.
 
-Studio opens in your browser. Create a presentation, describe what you want, and
-your own local agent writes it. Nothing leaves the machine.
+| | |
+|---|---|
+| **Every deck is a one-off** | Keyboard nav, scaling, fullscreen, reduced motion, deep links: reimplemented badly or skipped, once per deck, forever. |
+| **Quality is a coin flip** | No shared primitives, so output swings with the wording of the prompt. Two decks from one company look unrelated. |
+| **Nothing says it went wrong** | 12px labels and overlapping elements ship because no part of the loop ever objects. |
+| **The output is a dead end** | One generated file is not something you edit next quarter. You regenerate and hope. |
 
-Requires Node.js 20.19+. Bring your own agent: Codex, Claude, Gemini, or Kiro,
-whichever you already have installed and signed in.
+## What you get
 
-## Studio
+**A workspace you and your agent share.** Click any element to select it,
+double-click text to edit it. Edits repaint the slide without reloading, so you
+keep your place.
 
-A local workspace where you and an agent edit the same deck.
+**Your agent, your model.** Codex, Claude, Gemini, or Kiro, whichever you
+already have signed in. Pick the model per presentation. Each deck remembers its
+own conversation and resumes it when you come back.
 
-- **Live canvas.** A 16:9 stage that scales to any viewport. Click any element to
-  select it; double-click text to edit it in place. Edits repaint the slide
-  without reloading, so you keep your place.
-- **Your agent, your model.** Pick the connector and the model per presentation.
-  Each deck remembers its own conversation and resumes it when you return.
-- **Approvals you control.** Safe edits inside the presentation can apply
-  automatically. Destructive ones always ask. Anything reaching outside the
-  folder is refused, not prompted.
-- **History that reads like actions.** "Added metric slide", "Agent: tightened
-  the opening". Step back through it, or jump to any point.
-- **Export one file.** A self-contained HTML document you choose the location
-  for. It opens anywhere, with no assets to keep alongside it.
+**Approvals you control.** Safe in-project edits apply automatically.
+Destructive ones always ask. Anything reaching outside the folder is refused,
+not prompted.
+
+**Undo that reads like actions.** "Added metric slide". "Agent: tightened the
+opening". Step back through it, or jump to any earlier point.
+
+**One file out.** Export a self-contained HTML document you choose the location
+for. No folder of assets to keep beside it.
 
 ## Your slides are yours
 
@@ -101,10 +84,10 @@ A presentation is a folder in your Documents, not a project you maintain:
 ```
 
 No `package.json`, no lockfile, no `node_modules`. Studio supplies React and the
-build, so an agent never spends its first turn running installs, and you can
+build, so your agent never burns its first turn running installs, and you can
 move, copy, email, or version the folder like any other document.
 
-Slides are readable React, so you can always edit by hand:
+And it is readable React, so you are never locked out of your own deck:
 
 ```tsx
 <Slide id="evidence" title="The evidence" transition="slide">
@@ -120,29 +103,55 @@ Slides are readable React, so you can always edit by hand:
 Use a primitive when the pattern repeats. Use plain HTML when the slide is
 specific to your story. Both are first-class.
 
-## Validation is the point
+## Plug it into your agent
 
-The validator runs against real source and the real DOM, and reports a rule ID,
-a severity, the slide, a plain-language message, and a repair hint. It catches
-text below a readable size, elements off the canvas or overlapping, missing alt
-text, unreachable controls, and malformed structured data.
+OpenPresent ships an MCP server. Point your agent at it and the server starts
+Studio locally and hands over the authoring loop as tools.
+
+```json
+{
+  "mcpServers": {
+    "openpresent": {
+      "command": "npx",
+      "args": ["-y", "@openpresent/mcp", "--project", "~/Documents/OpenPresent/q3-review", "--open"]
+    }
+  }
+}
+```
+
+| Tool | What it does |
+|---|---|
+| `get_state`, `get_outline`, `get_selection` | Read the deck, the active slide, and the current selection. |
+| `apply_edit` | Guarded source edits: exact match, single occurrence, checkpointed. |
+| `insert_slide`, `list_slide_templates` | Add one slide or many, with the imports they need. |
+| `validate_deck` | Run the checks, get findings back as structured data. |
+| `capture_slide` | Screenshot a slide so the model can look at its own work. |
+| `undo`, `redo` | Every change is reversible, by the agent or by you. |
+
+## Taste, installed alongside the tools
+
+Tools let an agent change a deck. They do not tell it what a good deck is. That
+ships as a skill you install into the presentation, so the direction travels
+with the work instead of living in someone's prompt.
+
+```bash
+openpresent studio ./my-deck --create --skill deck-direction --open
+```
+
+The skill lands as a plain Markdown file your agent reads. Edit it, or replace
+it with your own house style.
+
+## Validation is the point
 
 ```bash
 openpresent validate src/deck.tsx
 openpresent validate http://127.0.0.1:4173 --min-font-size 18
 ```
 
-Agents can call it directly over MCP, which closes the loop: write, check, repair
-without a human relaying the problem.
-
-## For agent builders
-
-An MCP server exposes the authoring loop as tools: read state and selection,
-navigate, insert slides, edit guarded source ranges, validate, capture a slide as
-an image, undo. Edits are guarded (exact-match, single-occurrence, checkpointed)
-so an agent cannot silently clobber your work, and every change is undoable.
-
-See [docs/agents.md](docs/agents.md) for ready-made instructions.
+Every finding carries a rule ID, a severity, the slide, a plain-language
+message, and a repair hint. It catches text below a readable size, elements off
+the canvas or overlapping, missing alt text, unreachable controls, and malformed
+structured data.
 
 ## Architecture
 
@@ -165,7 +174,7 @@ never depends on the component library. Details in
 
 ```bash
 pnpm install
-pnpm check          # typecheck, test, build, validate
+pnpm check          # typecheck, build, test, validate
 pnpm test:browser   # Playwright smoke over the real Studio
 ```
 

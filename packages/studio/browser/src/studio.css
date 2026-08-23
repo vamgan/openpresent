@@ -246,9 +246,13 @@ button:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visi
 .message.is-user { padding-left: 11px; border-left: 2px solid var(--accent); }
 .message.is-system { color: var(--muted); }
 /* assistant-ui reports a failed turn as status "incomplete"; `is-failed` is set
-   from message metadata so system-role failures are marked too. */
-.message.is-incomplete, .message.is-failed { color: #9c2d1a; }
-.message.is-incomplete p, .message.is-failed p { color: #9c2d1a; }
+   from message metadata so system-role failures are marked too. Mark the message
+   rather than recolouring it: a long reply reprinted in error red is harder to
+   read, and the text is usually still worth reading. */
+.message.is-incomplete, .message.is-failed { padding-left: 11px; border-left: 2px solid var(--accent-text); }
+.message.is-incomplete > header::after, .message.is-failed > header::after {
+  content: "interrupted"; margin-left: auto; padding-left: 10px; color: var(--accent-text);
+}
 .message header { display: flex; justify-content: space-between; color: var(--faint); font: 450 12px var(--mono); text-transform: capitalize; }
 .message p { margin: 7px 0 0; font-size: 14px; line-height: 1.65; white-space: pre-wrap; }
 .message.is-assistant p, .message.is-user p { color: var(--ink); }
