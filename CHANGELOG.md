@@ -3,6 +3,27 @@
 All notable changes to OpenPresent are recorded here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-08-23
+
+### Fixed
+
+- `@openpresent/skills` shipped its installer from `bin/` while every other
+  published entry point came from `dist/`. The installer is now built into
+  `dist/` like the rest, which is what the packed smoke test asserts.
+
+### Changed
+
+- Releases publish through OpenID Connect instead of a long-lived npm token.
+  The packages are packed with pnpm, which resolves the `workspace:*` ranges to
+  real versions, and the resulting tarballs are published with npm, which can
+  exchange the OIDC token. A guard fails the release if any tarball still
+  carries an unresolved workspace range.
+
+### Note
+
+- 0.3.1 was tagged but never published: its release run failed on the installer
+  path above. Everything listed under 0.3.1 first reaches npm in this release.
+
 ## [0.3.1] - 2026-08-23
 
 ### Added
