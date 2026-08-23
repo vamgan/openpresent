@@ -4,7 +4,6 @@
   "description": "Agent-readable OpenPresent design-system skills and local installation helpers.",
   "type": "module",
   "files": [
-    "bin",
     "dist",
     "skills"
   ],
@@ -37,6 +36,6 @@
     "access": "public"
   },
   "bin": {
-    "openpresent-skill": "./bin/install.mjs"
+    "openpresent-skill": "./dist/install.mjs"
   }
 }

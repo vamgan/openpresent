@@ -41,9 +41,6 @@ jobs:
       - run: node tests/pack-consumer-smoke.mjs
 
       - name: Check the release is publishable
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             TAG="${GITHUB_REF_NAME#v}"
@@ -53,23 +50,39 @@ jobs:
               exit 1
             fi
           fi
-          if [ "$DRY_RUN" != "true" ] && [ -z "$NPM_TOKEN" ]; then
-            echo "::error::NPM_TOKEN is not set. Add it with: gh secret set NPM_TOKEN --repo ${GITHUB_REPOSITORY}"
-            exit 1
-          fi
 
-      # Publish through pnpm: it rewrites the workspace:* ranges to real
-      # versions. Publishing these with npm directly would ship "workspace:*" as
-      # a dependency and break every install.
+      # Pack with pnpm, publish with npm. pnpm rewrites the workspace:*
+      # ranges into the tarball but cannot exchange an OIDC token; npm can do
+      # the token exchange but would ship "workspace:*" verbatim. Packing first
+      # gives us correct dependencies and keyless publishing at once.
+      - name: Pack the packages
+        run: pnpm -r --filter "./packages/*" exec pnpm pack --pack-destination "${{ runner.temp }}/packs"
+
+      - name: Fail if any tarball still carries a workspace range
+        run: |
+          for tarball in "${{ runner.temp }}"/packs/*.tgz; do
+            if tar -xzOf "$tarball" package/package.json | grep -q '"workspace:'; then
+              echo "::error::$tarball ships an unresolved workspace range."
+              exit 1
+            fi
+          done
+
+      # Trusted publishing needs a newer npm than Node 22 bundles.
+      - run: npm install -g npm@latest
+
       - name: Publish packages
         if: ${{ inputs.dry_run != true }}
-        run: pnpm -r --filter "./packages/*" publish --access public --no-git-checks --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for tarball in "${{ runner.temp }}"/packs/*.tgz; do
+            npm publish "$tarball" --access public
+          done
 
       - name: Report what a real run would publish
         if: ${{ inputs.dry_run == true }}
-        run: pnpm -r --filter "./packages/*" publish --access public --no-git-checks --dry-run
+        run: |
+          for tarball in "${{ runner.temp }}"/packs/*.tgz; do
+            npm publish "$tarball" --access public --dry-run
+          done
 
       - name: Create the GitHub release
         if: ${{ github.ref_type == 'tag' && inputs.dry_run != true }}
