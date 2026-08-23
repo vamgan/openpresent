@@ -1,0 +1,45 @@
+{
+  "name": "@openpresent/mcp",
+  "version": "0.3.0",
+  "description": "Protocol-clean MCP doorway for the OpenPresent local authoring studio.",
+  "type": "module",
+  "bin": {
+    "openpresent-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@openpresent/studio": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vamgan/openpresent.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/vamgan/openpresent#readme",
+  "bugs": {
+    "url": "https://github.com/vamgan/openpresent/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
