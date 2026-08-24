@@ -3,6 +3,33 @@
 All notable changes to OpenPresent are recorded here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-08-23
+
+### Fixed
+
+- `openpresent studio` opens rather than refusing. It required a folder with
+  both a `package.json` and an `index.html`, so it turned down the very
+  presentations Studio creates, which deliberately have no `package.json`. Run
+  from anywhere else it now reopens your last presentation, and on a first run
+  with nothing to open it creates one, so the documented first command works
+  with no setup.
+- A guarded edit made during an agent turn no longer replaces that turn's
+  checkpoint, which discarded the writes recorded so far and left the agent's
+  next write failing its checkpoint check.
+- An agent turn that changed nothing no longer reports the previous turn's
+  files as freshly changed.
+- A library entry missing its timestamps no longer throws while sorting, which
+  left the author with no presentations listed at all.
+- IPv6 loopback URLs are accepted. `URL` keeps the host bracketed, so
+  `http://[::1]` never matched the bare `::1` and connecting the MCP server to
+  a running Studio was refused on IPv6-first machines.
+- The CLI and the MCP server report the version they actually shipped. Both
+  restated it as a literal, so the CLI said `0.1.0` from a `0.3.2` install and
+  the MCP server sent `0.3.0` in its handshake.
+- The opening Studio event-stream frame is sent before the client joins the
+  broadcast, so a change landing mid-read can no longer be overwritten by the
+  older opening frame.
+
 ## [0.3.2] - 2026-08-23
 
 ### Fixed

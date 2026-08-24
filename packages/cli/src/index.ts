@@ -3,7 +3,14 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync,
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build as viteBuild, createServer, type InlineConfig } from 'vite';
-import { startStudio, type StudioServer } from '@openpresent/studio';
+import {
+  isDocumentRoot,
+  listPresentations,
+  reserveDocumentPath,
+  scaffoldStudioDocument,
+  startStudio,
+  type StudioServer,
+} from '@openpresent/studio';
 import { installSkill, listSkills, resolveSkill } from '@openpresent/skills';
 import { validateTarget, type Diagnostic, type RuleId, type ValidatorConfig } from '@openpresent/validator';
 
@@ -97,22 +104,57 @@ export function createStarter(directory: string, options: CreateOptions = {}) {
   return target;
 }
 
-function findProjectRoot(entry?: string) {
+/**
+ * The presentation to open, or undefined to let Studio pick up where the author
+ * left off.
+ *
+ * Both shapes count: a Studio document, which is an index.html beside a deck
+ * entry and deliberately has no package.json, and a self-managed project that
+ * brings its own build. Requiring package.json here refused to open the very
+ * documents Studio creates.
+ */
+export function findProjectRoot(entry?: string): string | undefined {
   let current = resolve(entry ?? process.cwd());
   if (existsSync(current) && statSync(current).isFile()) current = dirname(current);
   while (true) {
-    if (existsSync(join(current, 'package.json')) && existsSync(join(current, 'index.html'))) return realpathSync(current);
+    const selfManaged = existsSync(join(current, 'package.json')) && existsSync(join(current, 'index.html'));
+    if (selfManaged || isDocumentRoot(current)) return realpathSync(current);
     const parent = dirname(current);
     if (parent === current) break;
     current = parent;
   }
-  throw new Error(`Could not find a deck project for "${entry ?? process.cwd()}". Expected package.json and index.html.`);
+  // Naming an explicit target that is not a presentation is a mistake worth
+  // reporting. Running from anywhere else is not: Studio opens the library.
+  if (entry) {
+    throw new Error(`Not an OpenPresent presentation: "${entry}". A presentation is a folder with an index.html and a deck entry such as src/deck.tsx.`);
+  }
+  return undefined;
+}
+
+/**
+ * Gives a first-time author something to open. Studio reopens the last
+ * presentation on its own, so this only runs when there is nothing at all,
+ * which is otherwise the one case where the documented first command fails.
+ */
+function firstRunDocument(): string | undefined {
+  if (listPresentations().some((entry) => !entry.missing)) return undefined;
+  const target = reserveDocumentPath('My first presentation');
+  scaffoldStudioDocument(target);
+  console.log(`Created a presentation to start from: ${target}`);
+  return target;
+}
+
+/** dev and build act on one presentation, so one has to be resolvable. */
+function requireProjectRoot(entry?: string): string {
+  const root = findProjectRoot(entry);
+  if (root) return root;
+  throw new Error(`No OpenPresent presentation found at "${entry ?? process.cwd()}". A presentation is a folder with an index.html and a deck entry such as src/deck.tsx.`);
 }
 
 export interface DevOptions { host?: string; port?: number; open?: boolean }
 
 export async function startDevServer(entry: string | undefined, options: DevOptions = {}) {
-  const root = findProjectRoot(entry);
+  const root = requireProjectRoot(entry);
   const server = await createServer({
     root,
     clearScreen: false,
@@ -127,7 +169,7 @@ export async function startDevServer(entry: string | undefined, options: DevOpti
 export interface BuildOptions { outDir?: string; sourcemap?: boolean }
 
 export async function buildDeck(entry: string | undefined, options: BuildOptions = {}) {
-  const root = findProjectRoot(entry);
+  const root = requireProjectRoot(entry);
   const outDir = resolve(root, options.outDir ?? 'dist');
   const config: InlineConfig = {
     root,
@@ -148,11 +190,13 @@ export interface StudioOptions { studioPort?: number; previewPort?: number; open
 
 export async function startAuthoringStudio(entry: string | undefined, options: StudioOptions = {}): Promise<StudioServer> {
   if (options.create && !entry) throw new Error('openpresent studio --create requires an explicit empty target directory.');
-  const root = options.create ? resolve(entry!) : findProjectRoot(entry);
+  const found = options.create ? resolve(entry!) : findProjectRoot(entry);
+  // undefined leaves Studio to reopen the last presentation from the library.
+  const root = found ?? firstRunDocument();
   const entryPath = !options.create && entry && existsSync(resolve(entry)) && statSync(resolve(entry)).isFile() ? resolve(entry) : undefined;
   const mcpEntry = fileURLToPath(import.meta.resolve('@openpresent/mcp'));
   return startStudio({
-    projectRoot: root,
+    ...(root ? { projectRoot: root } : {}),
     entry: entryPath,
     studioPort: options.studioPort,
     previewPort: options.previewPort,

@@ -2,11 +2,10 @@
 
 # OpenPresent
 
-### Everyone makes slides with AI now. Nothing checks them.
+### Everyone can generate a deck. Almost nobody can edit one.
 
-Your agent writes real React slides on your machine. A validator catches the
-12px legend, the overlapping element, and the text running off the stage,
-**before your audience does.**
+Your slides are React source on your machine — a document you and your agent
+keep working on, slide by slide. **Not HTML you regenerate and hope.**
 
 [![npm](https://img.shields.io/npm/v/@openpresent/cli?label=%40openpresent%2Fcli)](https://www.npmjs.com/package/@openpresent/cli)
 [![CI](https://github.com/vamgan/openpresent/actions/workflows/ci.yml/badge.svg)](https://github.com/vamgan/openpresent/actions/workflows/ci.yml)
@@ -26,52 +25,79 @@ npx -y @openpresent/cli studio --open
 
 ## The 30 second version
 
-Ask any model for a deck and you get a wall of HTML. It looks convincing in the
-chat window and falls apart on a projector, because **the model never sees what
-it made.**
+Generating the first draft is solved. Every model does it, and the result looks
+convincing in the chat window.
 
-OpenPresent closes that loop:
+The second draft is where it falls apart. You want to fix one number on slide
+seven, so you prompt again — and the model hands you a *new deck*. Different
+layout, different colors, and the three things you had already fixed by hand
+are gone. There is nothing to edit, so you re-roll and hope.
+
+OpenPresent makes the deck a document instead of an output:
 
 ```
-model.tiny-text  warning  [charts]  Legend text renders at 13px on the logical stage.
-                          Fix: raise to at least 18px so it survives projection.
+you            double-click the headline, type over it
+agent          "tighten slides 4 through 6"        → edits those three
+you            undo the second one, keep the rest
+tomorrow       reopen; the deck and the conversation are both still there
 ```
 
-The agent reads that, fixes it, and checks again. No human relaying the problem.
+One file, edited repeatedly. Nothing is regenerated to change one thing.
 
-## Why AI decks keep coming out unprofessional
+## Why AI decks don't survive a second draft
 
-HTML won for good reasons. PowerPoint is zipped XML driving an opaque layout
-engine, so a model writes it blind, while HTML is the language models write best
-and the browser runs everywhere. The whole industry converged on it in about a
-year, and inherited the same four problems.
+HTML won for good reasons: it is the language models write best, and the
+browser runs everywhere. But a deck that arrives as one generated artifact
+inherits four problems.
 
 | | |
 |---|---|
-| **Every deck is a one-off** | Keyboard nav, scaling, fullscreen, reduced motion, deep links: reimplemented badly or skipped, once per deck, forever. |
-| **Quality is a coin flip** | No shared primitives, so output swings with the wording of the prompt. Two decks from one company look unrelated. |
-| **Nothing says it went wrong** | 12px labels and overlapping elements ship because no part of the loop ever objects. |
-| **The output is a dead end** | One generated file is not something you edit next quarter. You regenerate and hope. |
+| **Editing means regenerating** | Change one figure and the model rewrites everything. Your manual fixes go with it. |
+| **Nothing carries over** | Tomorrow's session has never seen the deck. You re-explain it from scratch, every time. |
+| **One dead file** | A wall of inlined markup nobody can diff, review, or pick up next quarter. |
+| **Inconsistent by construction** | Each regeneration re-rolls the design, so two decks from one team look unrelated. |
 
-## What you get
+## The editing loop
 
 **A workspace you and your agent share.** Click any element to select it,
-double-click text to edit it. Edits repaint the slide without reloading, so you
-keep your place.
+double-click text to edit it. Your edits and the agent's land in the same
+source, and the slide repaints without reloading, so you keep your place.
 
-**Your agent, your model.** Codex, Claude, Gemini, or Kiro, whichever you
-already have signed in. Pick the model per presentation. Each deck remembers its
-own conversation and resumes it when you come back.
+**Edits stay scoped.** Ask for a change to one slide and one slide changes. The
+agent edits source in place through exact-match, single-occurrence edits, so it
+cannot quietly rewrite the deck around your request.
+
+**The conversation persists.** Each presentation remembers its own agent session
+and resumes it when you come back. Reopening a deck next week does not start
+from nothing.
+
+**Undo reads like actions.** "Added metric slide." "Agent: tightened the
+opening." Step back through them, or jump to any earlier point.
+
+**Your agent, your model.** Codex, Claude, Gemini, or Kiro — whichever you are
+already signed into. No API keys to paste, no container to run. Pick the model
+per presentation.
 
 **Approvals you control.** Safe in-project edits apply automatically.
 Destructive ones always ask. Anything reaching outside the folder is refused,
 not prompted.
 
-**Undo that reads like actions.** "Added metric slide". "Agent: tightened the
-opening". Step back through it, or jump to any earlier point.
+## Getting started
 
-**One file out.** Export a self-contained HTML document you choose the location
-for. No folder of assets to keep beside it.
+```bash
+npx -y @openpresent/cli studio --open
+```
+
+That is the whole setup. No account, no API key, no Docker. The first run
+creates a presentation and opens it; after that, the same command reopens
+whatever you were last working on.
+
+Already have a deck folder? `cd` into it and run the same command. Want a
+specific one? Name it:
+
+```bash
+openpresent studio ~/Documents/OpenPresent/q3-review
+```
 
 ## Your slides are yours
 
@@ -84,9 +110,9 @@ A presentation is a folder in your Documents, not a project you maintain:
   src/styles.css
 ```
 
-No `package.json`, no lockfile, no `node_modules`. Studio supplies React and the
-build, so your agent never burns its first turn running installs, and you can
-move, copy, email, or version the folder like any other document.
+No `package.json`, no lockfile, no `node_modules`. Studio supplies React and
+the build, so your agent never burns its first turn running installs, and you
+can move, copy, email, or version the folder like any other document.
 
 And it is readable React, so you are never locked out of your own deck:
 
@@ -102,7 +128,8 @@ And it is readable React, so you are never locked out of your own deck:
 ```
 
 Use a primitive when the pattern repeats. Use plain HTML when the slide is
-specific to your story. Both are first-class.
+specific to your story. Both are first-class — and both are still there
+tomorrow, because nothing regenerates them.
 
 ## Plug it into your agent
 
@@ -125,17 +152,16 @@ Studio locally and hands over the authoring loop as tools.
 | `get_state`, `get_outline`, `get_selection` | Read the deck, the active slide, and the current selection. |
 | `apply_edit` | Guarded source edits: exact match, single occurrence, checkpointed. |
 | `insert_slide`, `list_slide_templates` | Add one slide or many, with the imports they need. |
-| `validate_deck` | Run the checks, get findings back as structured data. |
 | `capture_slide` | Screenshot a slide so the model can look at its own work. |
+| `validate_deck` | Run the checks, get findings back as structured data. |
 | `undo`, `redo` | Every change is reversible, by the agent or by you. |
 
 ## Taste, installed alongside the tools
 
 Tools let an agent change a deck. They do not tell it what a good deck is. That
 ships as a skill you install into the presentation, so the direction travels
-with the work instead of living in someone's prompt.
-
-Install it wherever your agent already looks for skills:
+with the work instead of living in someone's prompt — which is also what keeps
+the fifteenth slide looking like the first.
 
 ```bash
 npx -y @openpresent/skills claude        # .claude/skills in this project
@@ -144,16 +170,19 @@ npx -y @openpresent/skills agents        # .agents/skills, for Codex and similar
 npx -y @openpresent/skills gpt           # plain files to upload to a GPT
 ```
 
-Or scaffold a presentation with it already in place:
-
-```bash
-openpresent studio ./my-deck --create --skill deck-direction --open
-```
-
 It lands as a plain Markdown file your agent reads. Edit it, or replace it with
 your own house style.
 
-## Validation is the point
+## A check before it ships
+
+The model never sees what it made, so some mistakes survive every draft: a 12px
+legend, an element off the stage, two things overlapping. The deck gets checked,
+and findings go back to the agent as data rather than through you.
+
+```
+model.tiny-text  warning  [charts]  Legend text renders at 13px on the logical stage.
+                          Fix: raise to at least 18px so it survives projection.
+```
 
 ```bash
 openpresent validate src/deck.tsx
@@ -162,8 +191,13 @@ openpresent validate http://127.0.0.1:4173 --min-font-size 18
 
 Every finding carries a rule ID, a severity, the slide, a plain-language
 message, and a repair hint. It catches text below a readable size, elements off
-the canvas or overlapping, missing alt text, unreachable controls, and malformed
-structured data.
+the canvas or overlapping, missing alt text, unreachable controls, and
+malformed structured data.
+
+## One file out
+
+Export a self-contained HTML document, to a location you choose. No folder of
+assets to keep beside it.
 
 ## Architecture
 
