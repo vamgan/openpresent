@@ -1,6 +1,6 @@
 <title>OpenPresent</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="A local-first presentation runtime for AI agents. Real React files, edited in place, checked by a validator that catches what a model cannot see." />
+<meta name="description" content="A local-first presentation studio for AI agents. Your deck is React source you and your agent keep editing, slide by slide, instead of HTML you regenerate from scratch to change one number." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
@@ -230,6 +230,7 @@
         <a href="#problem">Why</a>
         <a href="#loop">How it works</a>
         <a href="#studio">Studio</a>
+        <a href="#check">Check</a>
         <a href="#agents">Agents</a>
         <a href="https://github.com/vamgan/openpresent">GitHub</a>
       </nav>
@@ -241,13 +242,13 @@
   <div class="rail"><div class="tick">Thesis</div></div>
   <div class="col">
     <section>
-      <p class="kicker">Local-first presentation runtime</p>
-      <h1>Everyone makes slides with AI now. Nothing checks them.</h1>
+      <p class="kicker">Local-first presentation studio</p>
+      <h1>Everyone can generate a deck. Almost nobody can edit one.</h1>
       <p class="lede">
-        Ask any model for a deck and you get a wall of HTML. It looks convincing in
-        the chat window and falls apart on a projector. OpenPresent gives that
-        workflow a runtime, a component library, and a validator that inspects what
-        actually rendered before an audience does.
+        Generating the first draft is solved. The second draft is where it falls
+        apart: you want to fix one number on slide seven, you prompt again, and the
+        model hands you a whole new deck with your manual fixes gone. OpenPresent
+        makes the deck a document you and your agent keep editing instead.
       </p>
 
       <div class="cta-row">
@@ -269,14 +270,13 @@
         </div>
 
         <p class="note" style="margin-top:0">
-          Your model cannot see this slide. The validator can.
+          One file, edited repeatedly. Nothing is regenerated to change one thing.
         </p>
-        <div class="finding" role="note">
-          <span class="id">dom.tiny-text</span>
-          <span class="where">warning &middot; slide &ldquo;opening&rdquo; &middot; 3 elements</span>
-          <span class="msg">Legend labels render at 13px on the logical stage.</span>
-          <span class="fix">Fix: <b>raise to at least 18px</b> so the text survives projection.</span>
-        </div>
+        <pre><span class="c"># the same deck, across a week</span>
+<span class="k">you</span>       double-click the headline, type over it
+<span class="k">agent</span>     &ldquo;tighten slides 4 through 6&rdquo;  <span class="c">&rarr; edits those three</span>
+<span class="k">you</span>       undo the second one, keep the rest
+<span class="k">tomorrow</span>  reopen &mdash; deck and conversation are both still there</pre>
       </div>
     </section>
   </div>
@@ -286,36 +286,35 @@
   <div class="rail"><div class="tick">Problem</div></div>
   <div class="col">
     <section>
-      <h2>The format was the right call. What came with it was not.</h2>
+      <h2>The format was the right call. Treating the deck as output was not.</h2>
       <p class="prose">
         HTML won for good reasons. PowerPoint is zipped XML driving an opaque layout
         engine, so a model writes it blind, while HTML is the language models write
-        best and the browser runs everywhere. The whole industry converged on it
-        within a year, and inherited the same four problems.
+        best and the browser runs everywhere. But a deck that arrives as one
+        generated artifact inherits the same four problems.
       </p>
 
       <div class="problems">
         <div class="problem">
-          <h3>Every deck is a one-off</h3>
-          <p>Keyboard navigation, scaling, fullscreen, reduced motion, deep links: reimplemented badly or skipped, once per deck, forever.</p>
+          <h3>Editing means regenerating</h3>
+          <p>Change one figure and the model rewrites everything around it. The three things you had already fixed by hand go with it.</p>
         </div>
         <div class="problem">
-          <h3>Quality is a coin flip</h3>
-          <p>With no shared primitives, output swings with the wording of the prompt. Two decks from one company do not look related.</p>
+          <h3>Nothing carries over</h3>
+          <p>Tomorrow&rsquo;s session has never seen the deck. You re-explain the story, the structure, and the constraints from scratch, every time.</p>
         </div>
         <div class="problem">
-          <h3>Nothing says it went wrong</h3>
-          <p>Overlapping elements and 12px labels ship because no part of the loop ever objects. "Looks fine to me" is not available to a model.</p>
+          <h3>One dead file</h3>
+          <p>A wall of inlined markup nobody can diff, review, or pick up next quarter. It is an artifact, not a document.</p>
         </div>
         <div class="problem">
-          <h3>The output is a dead end</h3>
-          <p>One generated file is not something you edit next quarter. You regenerate from scratch and hope for a better roll.</p>
+          <h3>Inconsistent by construction</h3>
+          <p>Each regeneration re-rolls the design, so two decks from one team look unrelated &mdash; and so does slide fifteen next to slide one.</p>
         </div>
       </div>
 
       <p class="note">
-        The result is a deck that looks impressive in the chat window and
-        unprofessional on a projector.
+        The result is a deck you cannot revise &mdash; only replace.
       </p>
     </section>
   </div>
@@ -325,30 +324,32 @@
   <div class="rail"><div class="tick">Loop</div></div>
   <div class="col">
     <section>
-      <h2>Write, check, repair.</h2>
+      <h2>Edit it. Don&rsquo;t regenerate it.</h2>
       <p class="prose">
-        The validator is the part no other AI deck tool has, and the reason quality
-        stops depending on how well someone worded the prompt.
+        You and the agent work on the same source, at the same time, at whatever
+        granularity the change actually needs &mdash; a word, a slide, a section.
       </p>
 
       <div class="loop">
         <div class="step">
-          <h3>The agent writes TSX</h3>
-          <p>Slides take arbitrary React children. Primitives cover the patterns that repeat; plain markup covers everything specific to your story.</p>
+          <h3>You edit directly</h3>
+          <p>Click an element to select it, double-click text to change it. The slide repaints without reloading, so you never lose your place.</p>
         </div>
         <div class="step">
-          <h3>The validator inspects</h3>
-          <p>Real source and the real DOM. Text below a readable size, elements off the canvas or overlapping, missing alt text, unreachable controls.</p>
+          <h3>The agent edits in place</h3>
+          <p>Exact-match, single-occurrence edits against the real source. Ask for one slide and one slide changes; it cannot quietly rewrite the rest.</p>
         </div>
         <div class="step">
-          <h3>The agent repairs</h3>
-          <p>Each finding carries a rule ID, a severity, the slide, and a repair hint, so it can be acted on without a human relaying the problem.</p>
+          <h3>Nothing is lost</h3>
+          <p>Every change is a step you can walk back, and each presentation resumes its own agent conversation when you open it again.</p>
         </div>
       </div>
 
-      <pre><span class="c"># check the source, or the running deck</span>
-openpresent validate src/deck.tsx
-openpresent validate http://127.0.0.1:4173 <span class="k">--min-font-size</span> 18</pre>
+      <p class="note">
+        Slides take arbitrary React children, so primitives cover the patterns that
+        repeat and plain markup covers everything specific to your story. Both stay
+        editable, because neither gets regenerated.
+      </p>
     </section>
   </div>
 </div>
@@ -385,6 +386,37 @@ openpresent validate http://127.0.0.1:4173 <span class="k">--min-font-size</span
           <p>Loopback only. No account, no cloud service, no telemetry. Your agent runs locally under your own provider credentials.</p>
         </div>
       </div>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="check">
+  <div class="rail"><div class="tick">Check</div></div>
+  <div class="col">
+    <section>
+      <h2>A check before it ships.</h2>
+      <p class="prose">
+        The model never sees what it made, so a few mistakes survive every draft: a
+        12px legend, an element off the stage, two things overlapping. The deck gets
+        checked, and each finding goes back to the agent as data rather than through
+        you.
+      </p>
+
+      <div class="finding" role="note">
+        <span class="id">dom.tiny-text</span>
+        <span class="where">warning &middot; slide &ldquo;opening&rdquo; &middot; 3 elements</span>
+        <span class="msg">Legend labels render at 13px on the logical stage.</span>
+        <span class="fix">Fix: <b>raise to at least 18px</b> so the text survives projection.</span>
+      </div>
+
+      <pre><span class="c"># check the source, or the running deck</span>
+openpresent validate src/deck.tsx
+openpresent validate http://127.0.0.1:4173 <span class="k">--min-font-size</span> 18</pre>
+
+      <p class="note">
+        Text below a readable size, elements off the canvas or overlapping, missing
+        alt text, unreachable controls, malformed structured data.
+      </p>
     </section>
   </div>
 </div>
@@ -494,8 +526,13 @@ openpresent validate http://127.0.0.1:4173 <span class="k">--min-font-size</span
   <div class="rail"><div class="tick">Start</div></div>
   <div class="col">
     <section style="border-bottom: none;">
-      <h2>Open it and describe the deck you need.</h2>
-      <p class="prose">Requires Node.js 20.19 or newer, and an agent CLI you have already signed in to.</p>
+      <h2>Open it and start editing.</h2>
+      <p class="prose">
+        That is the whole setup: no account, no API key, no container. The first run
+        creates a presentation and opens it; after that the same command reopens
+        whatever you were last working on. Requires Node.js 20.19 or newer and an
+        agent CLI you have already signed in to.
+      </p>
       <div class="cta-row">
         <a class="cmd" href="https://github.com/vamgan/openpresent"><span>$</span><span>npx -y @openpresent/cli studio --open</span></a>
         <a class="ghost" href="https://github.com/vamgan/openpresent">Read the source</a>
