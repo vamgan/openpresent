@@ -1,6 +1,6 @@
 {
   "name": "@openpresent/studio",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Loopback-only local AI authoring engine and browser workspace for OpenPresent.",
   "type": "module",
   "files": [
