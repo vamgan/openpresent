@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { connectStudio, startStudio, type StudioOperations, type StudioServer } from '@openpresent/studio';
@@ -236,8 +236,23 @@ export async function runMcp(argv = process.argv.slice(2)) {
   return { handle, studio, operations, close: shutdown };
 }
 
-const invoked = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : '';
-if (import.meta.url === invoked) void runMcp().catch((error) => {
+/**
+ * True when this file was started directly, including through the symlink npm
+ * and npx place in node_modules/.bin. Comparing unresolved paths made that
+ * symlink look like a different file, so every npx and global invocation exited
+ * silently without ever running anything.
+ */
+function startedDirectly(): boolean {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(resolve(invoked));
+  } catch {
+    return false;
+  }
+}
+
+if (startedDirectly()) void runMcp().catch((error) => {
   console.error(`[OpenPresent MCP] ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

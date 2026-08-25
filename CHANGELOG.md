@@ -3,6 +3,22 @@
 All notable changes to OpenPresent are recorded here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-08-25
+
+### Fixed
+
+- `npx @openpresent/cli studio --open` runs. It did nothing at all: the check
+  deciding whether the file had been started directly compared unresolved
+  paths, and npx invokes a bin through the symlink in `node_modules/.bin`, so
+  the symlink looked like a different file and the program was never started.
+  The command exited 0 in silence, which is why it appeared to ignore `--open`.
+- `npx @openpresent/mcp` runs, for the same reason. Every agent pointed at the
+  documented MCP configuration was starting a server that did nothing.
+
+Both bins are now exercised through `node_modules/.bin` in the packed consumer
+smoke, which is the path npx and a global install actually take. Every earlier
+check ran the entry file directly and so never touched it.
+
 ## [0.3.3] - 2026-08-23
 
 ### Fixed

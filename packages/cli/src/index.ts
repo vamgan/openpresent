@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { build as viteBuild, createServer, type InlineConfig } from 'vite';
 import {
   isDocumentRoot,
@@ -349,5 +349,20 @@ export async function run(argv = process.argv) {
   }
 }
 
-const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : '';
-if (import.meta.url === invokedPath) void run();
+/**
+ * True when this file was started directly, including through the symlink npm
+ * and npx place in node_modules/.bin. Comparing unresolved paths made that
+ * symlink look like a different file, so every npx and global invocation exited
+ * silently without ever running anything.
+ */
+function startedDirectly(): boolean {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(resolve(invoked));
+  } catch {
+    return false;
+  }
+}
+
+if (startedDirectly()) void run();

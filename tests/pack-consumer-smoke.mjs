@@ -1,4 +1,4 @@
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import {
   mkdtempSync,
@@ -200,6 +200,28 @@ try {
   run('pnpm', ['typecheck'], consumer);
   run('pnpm', ['build'], consumer);
   run(process.execPath, ['packed-version-smoke.mjs'], consumer);
+
+  // Every published bin has to work through the node_modules/.bin symlink,
+  // because that is how npx and a global install invoke it. Running the entry
+  // file directly, as every other check here does, exercises a path real users
+  // never take: an entry guard that compared unresolved paths saw the symlink
+  // as a different file, so `npx @openpresent/cli` exited silently.
+  for (const [bin, args, expected] of [
+    ['openpresent', ['--version'], JSON.parse(readFileSync(join(consumer, 'node_modules/@openpresent/cli/package.json'), 'utf8')).version],
+    ['openpresent-mcp', ['--help'], 'openpresent-mcp'],
+    ['openpresent-skill', ['--help'], 'Usage'],
+  ]) {
+    // Both streams: the MCP server keeps stdout clear for the protocol, so its
+    // usage goes to stderr.
+    const started = spawnSync(join(consumer, 'node_modules/.bin', bin), args, { cwd: consumer, encoding: 'utf8' });
+    if (started.error) throw started.error;
+    const output = `${started.stdout ?? ''}${started.stderr ?? ''}`.trim();
+    if (!output.includes(expected)) {
+      throw new Error(`${bin} ${args.join(' ')} through node_modules/.bin printed ${JSON.stringify(output)}, expected it to contain ${JSON.stringify(expected)}.`);
+    }
+  }
+  console.log(JSON.stringify({ binsRunViaSymlink: 3 }));
+
   run(process.execPath, ['packed-studio-smoke.mjs'], consumer);
   run(process.execPath, ['packed-mcp-smoke.mjs'], consumer);
   run(process.execPath, ['packed-acp-smoke.mjs'], consumer);
