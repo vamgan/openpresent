@@ -1,6 +1,6 @@
 {
   "name": "@openpresent/mcp",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Protocol-clean MCP doorway for the OpenPresent local authoring studio.",
   "type": "module",
   "bin": {
