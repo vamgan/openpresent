@@ -3,6 +3,25 @@
 All notable changes to OpenPresent are recorded here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] - 2026-08-25
+
+### Added
+
+- `read_deck` returns the deck source exactly as it is on disk, with its path
+  and sha256. `apply_edit` matches exact text, but nothing exposed that text, so
+  an agent had to guess at `oldText`. Guessing is what produced
+  "found 0 matches" and "found 2 matches", and each failed edit cost a whole
+  agent turn. An agent can now read once and compose edits that apply first
+  try, including replacing the whole deck in a single call.
+
+### Changed
+
+- The MCP instructions and the Studio agent context both ask for as few passes
+  as possible: build a deck in one edit rather than one per slide, and validate
+  once at the end rather than after every slide. Authoring a deck was spending
+  most of its wall clock on agent round trips, not on any local work — source
+  validation measures about 1ms and a slide capture about 450ms.
+
 ## [0.3.4] - 2026-08-25
 
 ### Fixed

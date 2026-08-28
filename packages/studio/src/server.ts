@@ -315,6 +315,7 @@ export async function startStudio(options: StartStudioOptions = {}): Promise<Stu
           request.on('error', stop);
           return;
         }
+        if (request.method === 'GET' && url.pathname === '/api/source') return sendJson(response, 200, await engine.readDeck());
         if (request.method === 'GET' && url.pathname === '/api/outline') return sendJson(response, 200, await engine.getOutline());
         if (request.method === 'GET' && url.pathname === '/api/templates') return sendJson(response, 200, await engine.listSlideTemplates());
         if (request.method === 'GET' && url.pathname === '/api/selection') return sendJson(response, 200, await engine.getSelection() ?? null);

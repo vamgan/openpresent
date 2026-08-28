@@ -227,8 +227,17 @@ export interface PromptResult {
   acceptanceImproved: boolean;
 }
 
+/** The deck source exactly as it is on disk, with the hash guarded edits check. */
+export interface DeckSource {
+  /** Project-relative path, ready to pass straight back to apply_edit. */
+  path: string;
+  source: string;
+  sha256: string;
+}
+
 export interface StudioOperations {
   getState(): Promise<StudioState>;
+  readDeck(): Promise<DeckSource>;
   getOutline(): Promise<SlideOutlineItem[]>;
   getSelection(): Promise<SemanticSelection | undefined>;
   open(openBrowser?: boolean): Promise<{ studioUrl: string; previewUrl: string }>;

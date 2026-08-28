@@ -37,6 +37,7 @@ async function harness(selection: Awaited<ReturnType<StudioOperations['getSelect
   const shared = state();
   const operations: StudioOperations = {
     getState: vi.fn(async () => shared),
+    readDeck: vi.fn(async () => ({ path: 'src/deck.tsx', source: '<Slide id="opening" title="Opening" />', sha256: 'b'.repeat(64) })),
     getOutline: vi.fn(async () => shared.outline),
     getSelection: vi.fn(async () => selection),
     listSlideTemplates: vi.fn(async () => []),
@@ -66,9 +67,12 @@ async function harness(selection: Awaited<ReturnType<StudioOperations['getSelect
 
 describe('@openpresent/mcp tools', () => {
   it('keeps the opening workflow self-contained at the front of its instructions', () => {
-    expect(MCP_INSTRUCTIONS.slice(0, 512)).toMatch(/open_workspace/);
-    expect(MCP_INSTRUCTIONS.slice(0, 512)).toMatch(/get_selection/);
+    // The opening tells an agent how to edit without guessing, and to work in
+    // few passes: each wasted round trip is time the author waits through.
+    expect(MCP_INSTRUCTIONS.slice(0, 512)).toMatch(/read_deck/);
     expect(MCP_INSTRUCTIONS.slice(0, 512)).toMatch(/apply_edit/);
+    expect(MCP_INSTRUCTIONS.slice(0, 512)).toMatch(/sha256/);
+    expect(MCP_INSTRUCTIONS.slice(0, 512)).toMatch(/one apply_edit/);
     expect(MCP_INSTRUCTIONS.slice(0, 512)).toMatch(/validate_deck/);
   });
 
@@ -76,7 +80,7 @@ describe('@openpresent/mcp tools', () => {
     const { client, operations } = await harness();
     const listed = await client.listTools();
     expect(listed.tools.map(({ name }) => name)).toEqual([
-      'open_workspace', 'get_state', 'get_outline', 'get_selection', 'navigate_slide',
+      'open_workspace', 'get_state', 'read_deck', 'get_outline', 'get_selection', 'navigate_slide',
       'validate_deck', 'capture_slide', 'apply_edit',
       'list_slide_templates', 'insert_slide', 'new_deck', 'replace_selected_text', 'save_deck',
       'delete_slide', 'undo', 'redo',
@@ -90,6 +94,7 @@ describe('@openpresent/mcp tools', () => {
 
     expect((await client.callTool({ name: 'open_workspace', arguments: {} })).structuredContent).toMatchObject({ studioUrl: expect.stringContaining('127.0.0.1') });
     expect((await client.callTool({ name: 'get_state', arguments: {} })).structuredContent).toMatchObject({ activeSlideId: 'opening' });
+    expect((await client.callTool({ name: 'read_deck', arguments: {} })).structuredContent).toMatchObject({ path: 'src/deck.tsx', source: expect.stringContaining('Slide') });
     expect((await client.callTool({ name: 'get_outline', arguments: {} })).structuredContent).toMatchObject({ slides: [{ id: 'opening' }] });
     expect((await client.callTool({ name: 'get_selection', arguments: {} })).structuredContent).toEqual({ selection: null });
     expect((await client.callTool({ name: 'navigate_slide', arguments: { slideId: 'opening' } })).structuredContent).toMatchObject({ activeSlideId: 'opening' });

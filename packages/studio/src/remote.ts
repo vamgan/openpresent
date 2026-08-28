@@ -1,5 +1,5 @@
 import { assertLoopbackUrl } from './security';
-import type { CaptureResult, DeleteSlideResult, EditResult, GuardedEdit, InsertSlideResult, NewDeckResult, SaveResult, SelectedTextEditResult, SemanticSelection, SlideOutlineItem, StudioOperations, StudioState, UndoResult } from './types';
+import type { CaptureResult, DeckSource, DeleteSlideResult, EditResult, GuardedEdit, InsertSlideResult, NewDeckResult, SaveResult, SelectedTextEditResult, SemanticSelection, SlideOutlineItem, StudioOperations, StudioState, UndoResult } from './types';
 import type { SlideTemplateRecipe } from './templates';
 import type { ValidationResult } from '@openpresent/validator';
 
@@ -23,6 +23,7 @@ export function connectStudio(options: StudioClientOptions): StudioOperations {
   const post = <T>(path: string, body: unknown = {}) => request<T>(path, { method: 'POST', body: JSON.stringify(body) });
   return {
     getState: () => request<StudioState>('/api/state'),
+    readDeck: () => request<DeckSource>('/api/source'),
     getOutline: () => request<SlideOutlineItem[]>('/api/outline'),
     getSelection: async () => (await request<SemanticSelection | null>('/api/selection')) ?? undefined,
     listSlideTemplates: () => request<readonly SlideTemplateRecipe[]>('/api/templates'),

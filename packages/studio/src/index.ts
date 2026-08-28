@@ -30,6 +30,7 @@ export {
   type AgentTranscriptItem,
   type AuthoringMessage,
   type CaptureResult,
+  type DeckSource,
   type DeleteSlideResult,
   type DiscoveredAgentProfile,
   type EditResult,

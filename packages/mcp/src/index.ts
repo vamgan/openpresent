@@ -12,7 +12,7 @@ import * as z from 'zod/v4';
 export const VERSION: string = (
   JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
 ).version;
-export const MCP_INSTRUCTIONS = 'OpenPresent keeps TSX authoritative. Open with open_workspace, inspect get_state, get_outline, and get_selection, edit through apply_edit, then check with validate_deck. Slides accept arbitrary JSX children, so author whatever the content needs, including your own markup, layout, and components; bespoke slides are the norm, not the exception. insert_slide with list_slide_templates is a shortcut for a conventional layout and for adding several slides at once. It is a starting point to build on, never a limit on what a slide may contain, and a deck of nothing but unmodified templates is a failure. Use replace_selected_text to reword the current selection. Run validate_deck, inspect or capture the result, and call undo only when acceptance regresses. Use navigate_slide to keep the browser, selection, and agent context aligned. delete_slide and new_deck are destructive. Read tools are safe; mutating tools are explicitly annotated. Studio owns the runtime and is already running: never install dependencies, never add or edit package.json, tsconfig, or a build config, and never run package managers, builds, dev servers, or typechecks. An absent or empty node_modules is expected and correct; validate_deck is the check. The entire loop is local and project-scoped; never invent metrics or edit outside the selected root.';
+export const MCP_INSTRUCTIONS = 'OpenPresent keeps TSX authoritative. The workspace is already open, so start by calling read_deck: it returns the exact source and its sha256, which is what apply_edit matches against. Guessing at oldText is what produces \"found 0 matches\", and every failed edit costs a turn. Build a whole deck in one apply_edit rather than one call per slide, passing several edits together or replacing the whole file in a single edit, then validate_deck once at the end. Slides accept arbitrary JSX children, so author whatever the content needs, including your own markup, layout, and components; bespoke slides are the norm, not the exception. insert_slide with list_slide_templates is a shortcut for a conventional layout and for adding several slides at once. It is a starting point to build on, never a limit on what a slide may contain, and a deck of nothing but unmodified templates is a failure. Use replace_selected_text to reword the current selection. Run validate_deck, inspect or capture the result, and call undo only when acceptance regresses. Use navigate_slide to keep the browser, selection, and agent context aligned. delete_slide and new_deck are destructive. Read tools are safe; mutating tools are explicitly annotated. Studio owns the runtime and is already running: never install dependencies, never add or edit package.json, tsconfig, or a build config, and never run package managers, builds, dev servers, or typechecks. An absent or empty node_modules is expected and correct; validate_deck is the check. The entire loop is local and project-scoped; never invent metrics or edit outside the selected root.';
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 const LOCAL_MUTATION = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
@@ -43,6 +43,12 @@ export function createMcpServer(operations: StudioOperations) {
     inputSchema: z.object({}),
     annotations: READ_ONLY,
   }, async () => result(await operations.getState()));
+  server.registerTool('read_deck', {
+    title: 'Read the deck source',
+    description: 'Return the deck TSX exactly as it is on disk, with its path and sha256. Read this before apply_edit so oldText matches the file instead of being guessed at, and pass the sha256 back as expectedSha256.',
+    inputSchema: z.object({}),
+    annotations: READ_ONLY,
+  }, async () => result(await operations.readDeck()));
   server.registerTool('get_outline', {
     title: 'Read slide outline',
     description: 'List every authoritative slide ID, title, label, and deck order.',

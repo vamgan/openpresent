@@ -22,6 +22,7 @@ import {
   STUDIO_PROTOCOL_VERSION,
   normalizeSelection,
   type CaptureResult,
+  type DeckSource,
   type EditResult,
   type DeleteSlideResult,
   type GuardedEdit,
@@ -234,6 +235,18 @@ export class StudioEngine implements StudioOperations {
     delete this.state.selection;
     this.touch();
     return this.getState();
+  }
+
+  /**
+   * The deck source as it stands, with the hash apply_edit verifies against.
+   *
+   * Guarded edits match exact text, so an agent with no way to read the file
+   * has to guess at it. Guessing is what produces "found 0 matches" and
+   * "found 2 matches", and each failure costs a whole turn.
+   */
+  async readDeck(): Promise<DeckSource> {
+    const source = readFileSync(this.entryPath, 'utf8');
+    return { path: relative(this.projectRoot, this.entryPath), source, sha256: sha256(source) };
   }
 
   async validate(options: { browser?: boolean } = {}): Promise<ValidationResult> {
@@ -693,7 +706,8 @@ export class StudioEngine implements StudioOperations {
       `Current diagnostics:\n${diagnostics}`,
       'The starting deck carries no theme of its own, so it renders in the runtime default (near-black with a coral accent). Treat that as a placeholder rather than a design decision: choose a palette and type scale that suit this subject and set them through the deck theme.',
       'Deck Direction guidance: preserve evidence, establish a clear narrative beat, use one coherent accent and type scale, keep logical text at least 18px, choose semantic primitives when they aid validation and freeform TSX when the composition needs it, motivate reveals, honor reduced motion, and never invent metrics.',
-      'Compose each slide from the content itself: slides take arbitrary React children, so write the markup and layout the material needs instead of leaving template placeholders in place. Templates are starting points to build on. Use the client-provided OpenPresent MCP tools when available. Keep edits inside the project root and make the smallest source change that satisfies the request. TSX remains authoritative.',
+      'Compose each slide from the content itself: slides take arbitrary React children, so write the markup and layout the material needs instead of leaving template placeholders in place. Templates are starting points to build on. Use the client-provided OpenPresent MCP tools when available. Keep edits inside the project root. TSX remains authoritative.',
+      'Work in as few passes as possible: every round trip is time the author spends watching a spinner. When building a deck rather than revising one, write the whole deck in a single edit instead of one edit per slide, and validate once at the end rather than after each slide. When revising, make the smallest source change that satisfies the request.',
       `User request: ${userPrompt}`,
     ].join('\n\n');
   }
